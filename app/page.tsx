@@ -22,7 +22,7 @@ export default function Home() {
   const [roomCode, setRoomCode] = useState("2407");
   const [nickname, setNickname] = useState("");
   const [gradeBand, setGradeBand] = useState<GradeBand>("1-2");
-  const [player, setPlayer] = useState<Player | null>(null);
+  const [player] = useState<Player | null>(null);
   const [results, setResults] = useState<Result[]>([]);
   const [resultRoom, setResultRoom] = useState("2407");
   const [status, setStatus] = useState("");
@@ -41,6 +41,21 @@ export default function Home() {
 
   useEffect(() => { void loadResults(resultRoom); }, [loadResults, resultRoom]);
 
+  useEffect(() => {
+    const receiveGameResult = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const message = event.data as { type?: string; roomCode?: string };
+      if (message.type !== "kheel-score-saved" || !message.roomCode) return;
+      setResultRoom(message.roomCode);
+      void loadResults(message.roomCode);
+      setStatus("게임 결과가 결과판에 반영됐어요.");
+      document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    window.addEventListener("message", receiveGameResult);
+    return () => window.removeEventListener("message", receiveGameResult);
+  }, [loadResults]);
+
   const joinRoom = async (event: FormEvent) => {
     event.preventDefault();
     if (!/^\d{4,6}$/.test(roomCode)) return setStatus("입장코드는 숫자 4~6자리로 입력해 주세요.");
@@ -55,9 +70,23 @@ export default function Home() {
       });
       const data = (await response.json()) as Player & { error?: string };
       if (!response.ok) throw new Error(data.error || "입장할 수 없습니다.");
-      setPlayer(data);
       setResultRoom(roomCode);
-      document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
+      window.localStorage.setItem(`kheel-player-${data.token}`, JSON.stringify(data));
+
+      const gameUrl = new URL("/game", window.location.origin);
+      gameUrl.searchParams.set("session", data.token);
+      const gameWindow = window.open(
+        gameUrl.toString(),
+        "kheel-game",
+        "popup,width=980,height=760,menubar=no,toolbar=no,location=no,status=no",
+      );
+
+      if (gameWindow) {
+        gameWindow.focus();
+        setStatus("게임창이 열렸어요. 게임을 마치면 결과판이 자동으로 갱신됩니다.");
+      } else {
+        setStatus("팝업이 차단됐어요. 브라우저에서 팝업 허용 후 다시 입장해 주세요.");
+      }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "잠시 후 다시 시도해 주세요.");
     } finally {
