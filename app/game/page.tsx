@@ -33,6 +33,15 @@ export default function GameWindow() {
       const parsed = JSON.parse(storedPlayer) as Player;
       setPlayer(parsed);
       setStatus("");
+      void fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: parsed.token,
+          gameId: `game-${parsed.gradeBand}`,
+          status: "in_progress",
+        }),
+      });
     } catch {
       setStatus("입장 정보를 읽지 못했어요. 원래 화면에서 다시 입장해 주세요.");
     }

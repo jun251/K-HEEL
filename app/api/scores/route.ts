@@ -9,7 +9,12 @@ export async function GET(request: Request) {
       FROM scores s JOIN players p ON p.id = s.player_id
       WHERE s.room_code = ? GROUP BY s.player_id, p.nickname, s.grade_band
       ORDER BY score DESC, p.nickname ASC LIMIT 20`).bind(roomCode).all<{ nickname: string; gradeBand: string; score: number }>();
-    const results = query.results.map((item, index) => ({ ...item, rank: index + 1 }));
+    const results = query.results.map(
+      (item: { nickname: string; gradeBand: string; score: number }, index: number) => ({
+        ...item,
+        rank: index + 1,
+      }),
+    );
     return Response.json({ results });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "결과를 불러오지 못했습니다." }, { status: 500 });
@@ -24,7 +29,19 @@ export async function POST(request: Request) {
     const db = await ensureGameSchema();
     const player = await db.prepare("SELECT id, room_code AS roomCode, grade_band AS gradeBand FROM players WHERE session_token = ? LIMIT 1").bind(payload.token).first<{ id: number; roomCode: string; gradeBand: string }>();
     if (!player || player.roomCode !== payload.roomCode) return Response.json({ error: "다시 입장해 주세요." }, { status: 401 });
-    await db.prepare("INSERT INTO scores (player_id, room_code, grade_band, game_id, score) VALUES (?, ?, ?, ?, ?)").bind(player.id, player.roomCode, player.gradeBand, payload.gameId, score).run();
+    await db.batch([
+      db.prepare("INSERT INTO scores (player_id, room_code, grade_band, game_id, score) VALUES (?, ?, ?, ?, ?)")
+        .bind(player.id, player.roomCode, player.gradeBand, payload.gameId, score),
+      db.prepare(`
+        INSERT INTO player_progress (player_id, room_code, game_id, status, updated_at)
+        VALUES (?, ?, ?, 'completed', CURRENT_TIMESTAMP)
+        ON CONFLICT(player_id) DO UPDATE SET
+          room_code = excluded.room_code,
+          game_id = excluded.game_id,
+          status = 'completed',
+          updated_at = CURRENT_TIMESTAMP
+      `).bind(player.id, player.roomCode, payload.gameId),
+    ]);
     return Response.json({ saved: true, score }, { status: 201 });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "점수를 저장하지 못했습니다." }, { status: 500 });

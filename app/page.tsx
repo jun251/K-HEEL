@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type GradeBand = "1-2" | "3-4" | "5-6";
 type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand };
@@ -27,6 +27,11 @@ export default function Home() {
   const [resultRoom, setResultRoom] = useState("2407");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [teacherLoginOpen, setTeacherLoginOpen] = useState(false);
+  const [teacherCode, setTeacherCode] = useState("");
+  const [teacherStatus, setTeacherStatus] = useState("");
+  const adminClickCount = useRef(0);
+  const adminClickTimer = useRef<number | null>(null);
 
   const loadResults = useCallback(async (code: string) => {
     try {
@@ -94,6 +99,54 @@ export default function Home() {
     }
   };
 
+  const handleAdminLogoClick = () => {
+    adminClickCount.current += 1;
+    if (adminClickTimer.current) window.clearTimeout(adminClickTimer.current);
+    adminClickTimer.current = window.setTimeout(() => {
+      adminClickCount.current = 0;
+    }, 1500);
+    if (adminClickCount.current < 3) return;
+    adminClickCount.current = 0;
+    window.open(
+      "/admin",
+      "kheel-admin",
+      "popup,width=1280,height=860,menubar=no,toolbar=no,location=no,status=no",
+    )?.focus();
+  };
+
+  const loginTeacher = async (event: FormEvent) => {
+    event.preventDefault();
+    const teacherWindow = window.open(
+      "about:blank",
+      "kheel-teacher",
+      "popup,width=1280,height=860,menubar=no,toolbar=no,location=no,status=no",
+    );
+    setLoading(true);
+    setTeacherStatus("");
+    try {
+      const response = await fetch("/api/teacher/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: teacherCode }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "선생님 로그인을 할 수 없습니다.");
+      setTeacherLoginOpen(false);
+      setTeacherCode("");
+      if (teacherWindow) {
+        teacherWindow.location.href = "/teacher";
+        teacherWindow.focus();
+      } else {
+        setTeacherStatus("팝업이 차단됐습니다. 팝업을 허용한 뒤 다시 로그인해 주세요.");
+      }
+    } catch (error) {
+      teacherWindow?.close();
+      setTeacherStatus(error instanceof Error ? error.message : "선생님 로그인을 할 수 없습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const finishGame = async (score: number) => {
     if (!player) return;
     setLoading(true);
@@ -120,9 +173,35 @@ export default function Home() {
   return (
     <main>
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="머니놀이터 홈"><span>₩</span> 머니놀이터</a>
-        <nav><a href="#grades">게임 둘러보기</a><a href="#results">우리 방 결과</a></nav>
+        <div className="brand">
+          <button className="brand-secret" type="button" onClick={handleAdminLogoClick} aria-label="머니놀이터 로고"><span>₩</span></button>
+          <a href="#top">머니놀이터</a>
+        </div>
+        <nav><a href="#grades">게임 둘러보기</a><a href="#results">우리 방 결과</a><button className="teacher-login-link" onClick={() => setTeacherLoginOpen(true)}>선생님 로그인</button></nav>
       </header>
+
+      {teacherLoginOpen && (
+        <div className="login-modal-backdrop" role="presentation" onMouseDown={() => setTeacherLoginOpen(false)}>
+          <form className="login-modal" onSubmit={loginTeacher} role="dialog" aria-modal="true" aria-labelledby="teacher-login-title" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => setTeacherLoginOpen(false)} aria-label="닫기">×</button>
+            <span className="modal-icon">✎</span>
+            <p className="eyebrow">TEACHER LOGIN</p>
+            <h2 id="teacher-login-title">선생님 현황판 열기</h2>
+            <p>관리자에게 받은 선생님 코드를 입력하면 학생들의 게임 진행 상황이 별도 창으로 열립니다.</p>
+            <label>선생님 코드
+              <input
+                autoFocus
+                value={teacherCode}
+                onChange={(event) => setTeacherCode(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 16))}
+                placeholder="T-ABCD-1234"
+                autoComplete="off"
+              />
+            </label>
+            <button className="primary-button" disabled={loading}>{loading ? "확인 중…" : "학생 현황 열기 →"}</button>
+            {teacherStatus && <p className="form-status" role="status">{teacherStatus}</p>}
+          </form>
+        </div>
+      )}
 
       <section className="hero" id="top">
         <div className="hero-copy">

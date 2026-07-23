@@ -8,6 +8,13 @@
       "when": 1784619464719,
       "tag": "0000_fuzzy_colleen_wing",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784790835002,
+      "tag": "0001_panoramic_pixie",
+      "breakpoints": true
     }
   ]
 }

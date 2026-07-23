@@ -25,3 +25,43 @@ export const scores = sqliteTable("scores", {
   score: integer("score").notNull(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("scores_room_idx").on(table.roomCode), index("scores_player_idx").on(table.playerId)]);
+
+export const admins = sqliteTable("admins", {
+  email: text("email").primaryKey(),
+  displayName: text("display_name"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const teacherAccess = sqliteTable("teacher_access", {
+  roomCode: text("room_code").primaryKey(),
+  codeHash: text("code_hash").notNull(),
+  codeHint: text("code_hint").notNull(),
+  createdBy: text("created_by").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const teacherSessions = sqliteTable("teacher_sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  roomCode: text("room_code").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("teacher_sessions_room_idx").on(table.roomCode)]);
+
+export const playerProgress = sqliteTable("player_progress", {
+  playerId: integer("player_id").primaryKey(),
+  roomCode: text("room_code").notNull(),
+  gameId: text("game_id").notNull(),
+  status: text("status").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("player_progress_room_idx").on(table.roomCode)]);
+
+export const auditLogs = sqliteTable("audit_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  actorEmail: text("actor_email").notNull(),
+  action: text("action").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: text("target_id").notNull(),
+  beforeValue: text("before_value"),
+  afterValue: text("after_value"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("audit_logs_target_idx").on(table.targetType, table.targetId)]);
