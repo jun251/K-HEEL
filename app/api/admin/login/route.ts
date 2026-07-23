@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const payload = (await request.json()) as { password?: string };
     const supplied = payload.password ?? "";
     const expected = configuredPassword();
-    if (typeof expected !== "string" || expected.length < 10) {
+    if (typeof expected !== "string" || expected.length < 8) {
       return Response.json({ error: "관리자 비밀번호가 아직 설정되지 않았습니다." }, { status: 503 });
     }
 
