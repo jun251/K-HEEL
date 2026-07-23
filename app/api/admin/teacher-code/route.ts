@@ -11,7 +11,7 @@ function createTeacherCode() {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireAdminApi();
+    const user = await requireAdminApi(request);
     if (!user) return Response.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
     const payload = (await request.json()) as { roomCode?: string };
     const roomCode = payload.roomCode?.trim() ?? "";

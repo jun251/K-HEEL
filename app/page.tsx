@@ -30,6 +30,9 @@ export default function Home() {
   const [teacherLoginOpen, setTeacherLoginOpen] = useState(false);
   const [teacherCode, setTeacherCode] = useState("");
   const [teacherStatus, setTeacherStatus] = useState("");
+  const [adminLoginOpen, setAdminLoginOpen] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminStatus, setAdminStatus] = useState("");
   const adminClickCount = useRef(0);
   const adminClickTimer = useRef<number | null>(null);
 
@@ -107,11 +110,41 @@ export default function Home() {
     }, 1500);
     if (adminClickCount.current < 3) return;
     adminClickCount.current = 0;
-    window.open(
-      "/admin",
+    setAdminStatus("");
+    setAdminLoginOpen(true);
+  };
+
+  const loginAdmin = async (event: FormEvent) => {
+    event.preventDefault();
+    const adminWindow = window.open(
+      "about:blank",
       "kheel-admin",
       "popup,width=1280,height=860,menubar=no,toolbar=no,location=no,status=no",
-    )?.focus();
+    );
+    setLoading(true);
+    setAdminStatus("");
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: adminPassword }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "관리자 로그인을 할 수 없습니다.");
+      setAdminLoginOpen(false);
+      setAdminPassword("");
+      if (adminWindow) {
+        adminWindow.location.href = "/admin";
+        adminWindow.focus();
+      } else {
+        setAdminStatus("팝업이 차단됐습니다. 팝업을 허용한 뒤 다시 로그인해 주세요.");
+      }
+    } catch (error) {
+      adminWindow?.close();
+      setAdminStatus(error instanceof Error ? error.message : "관리자 로그인을 할 수 없습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loginTeacher = async (event: FormEvent) => {
@@ -199,6 +232,30 @@ export default function Home() {
             </label>
             <button className="primary-button" disabled={loading}>{loading ? "확인 중…" : "학생 현황 열기 →"}</button>
             {teacherStatus && <p className="form-status" role="status">{teacherStatus}</p>}
+          </form>
+        </div>
+      )}
+
+      {adminLoginOpen && (
+        <div className="login-modal-backdrop" role="presentation" onMouseDown={() => setAdminLoginOpen(false)}>
+          <form className="login-modal admin-login-modal" onSubmit={loginAdmin} role="dialog" aria-modal="true" aria-labelledby="admin-login-title" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => setAdminLoginOpen(false)} aria-label="닫기">×</button>
+            <span className="modal-icon">⚙</span>
+            <p className="eyebrow">ADMIN LOGIN</p>
+            <h2 id="admin-login-title">관리자 페이지 로그인</h2>
+            <p>관리자 비밀번호를 입력하면 수업과 학생 결과를 관리하는 별도 창이 열립니다.</p>
+            <label>관리자 비밀번호
+              <input
+                autoFocus
+                type="password"
+                value={adminPassword}
+                onChange={(event) => setAdminPassword(event.target.value.slice(0, 80))}
+                placeholder="비밀번호 입력"
+                autoComplete="current-password"
+              />
+            </label>
+            <button className="primary-button" disabled={loading || !adminPassword}>{loading ? "확인 중…" : "관리자 페이지 열기 →"}</button>
+            {adminStatus && <p className="form-status" role="status">{adminStatus}</p>}
           </form>
         </div>
       )}

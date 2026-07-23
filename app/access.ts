@@ -1,5 +1,5 @@
 import { ensureGameSchema } from "../db/runtime";
-import { getChatGPTUser } from "./chatgpt-auth";
+import { headers } from "next/headers";
 
 export async function hashSecret(value: string) {
   const bytes = new TextEncoder().encode(value);
@@ -7,26 +7,31 @@ export async function hashSecret(value: string) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export async function requireAdminApi() {
-  const user = await getChatGPTUser();
-  if (!user) return null;
-
+async function validateAdminToken(token: string | null) {
+  if (!token) return null;
   const db = await ensureGameSchema();
-  const count = await db.prepare("SELECT COUNT(*) AS count FROM admins").first<{ count: number }>();
-  if (!count?.count) {
-    await db.prepare("INSERT OR IGNORE INTO admins (email, display_name) VALUES (?, ?)")
-      .bind(user.email.toLowerCase(), user.displayName)
-      .run();
-  }
+  const tokenHash = await hashSecret(token);
+  const session = await db.prepare(
+    "SELECT token_hash FROM admin_sessions WHERE token_hash = ? AND expires_at > CURRENT_TIMESTAMP LIMIT 1",
+  ).bind(tokenHash).first<{ tokenHash: string }>();
+  return session ? { email: "password-admin", displayName: "관리자" } : null;
+}
 
-  const admin = await db.prepare("SELECT email FROM admins WHERE email = ? LIMIT 1")
-    .bind(user.email.toLowerCase())
-    .first<{ email: string }>();
-  return admin ? user : null;
+export async function requireAdminApi(request: Request) {
+  return validateAdminToken(readCookie(request, "kheel_admin"));
+}
+
+export async function requireAdminPage() {
+  const requestHeaders = await headers();
+  const cookieHeader = requestHeaders.get("cookie") ?? "";
+  return validateAdminToken(readCookieHeader(cookieHeader, "kheel_admin"));
 }
 
 export function readCookie(request: Request, name: string) {
-  const cookies = request.headers.get("cookie") ?? "";
+  return readCookieHeader(request.headers.get("cookie") ?? "", name);
+}
+
+function readCookieHeader(cookies: string, name: string) {
   const prefix = `${name}=`;
   for (const part of cookies.split(";")) {
     const value = part.trim();

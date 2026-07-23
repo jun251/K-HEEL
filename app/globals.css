@@ -103,6 +103,7 @@ footer { padding:52px clamp(20px,7vw,110px); background:var(--ink); color:white;
 .login-modal label { display:block; font-size:14px; font-weight:900; margin-bottom:20px; }
 .login-modal input { display:block; width:100%; border:1.5px solid #b9c6c0; background:white; border-radius:12px; padding:15px; font-size:17px; outline:none; margin-top:8px; text-transform:uppercase; letter-spacing:1px; }
 .login-modal input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(12,107,79,.12); }
+.admin-login-modal input { text-transform:none; letter-spacing:.2px; }
 
 .portal-main { min-height:100vh; background:#f3f7f4; color:var(--ink); padding-bottom:72px; }
 .portal-header { min-height:78px; padding:13px clamp(20px,4vw,64px); display:flex; align-items:center; justify-content:space-between; gap:20px; background:var(--ink); color:white; }

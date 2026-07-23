@@ -47,6 +47,19 @@ export const teacherSessions = sqliteTable("teacher_sessions", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("teacher_sessions_room_idx").on(table.roomCode)]);
 
+export const adminSessions = sqliteTable("admin_sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const adminLoginAttempts = sqliteTable("admin_login_attempts", {
+  clientKey: text("client_key").primaryKey(),
+  failedCount: integer("failed_count").notNull().default(0),
+  windowStartedAt: text("window_started_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  lockedUntil: text("locked_until"),
+});
+
 export const playerProgress = sqliteTable("player_progress", {
   playerId: integer("player_id").primaryKey(),
   roomCode: text("room_code").notNull(),
