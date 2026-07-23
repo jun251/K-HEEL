@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     const token = crypto.randomUUID() + crypto.randomUUID();
-    const tokenHash = await hashSecret(token);
+    const tokenHash = await hashSecret(`${token}|${expected}`);
     const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
     await db.batch([
       db.prepare("DELETE FROM admin_login_attempts WHERE client_key = ?").bind(clientKey),

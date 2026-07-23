@@ -1,4 +1,5 @@
 import { ensureGameSchema } from "../db/runtime";
+import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 
 export async function hashSecret(value: string) {
@@ -9,8 +10,10 @@ export async function hashSecret(value: string) {
 
 async function validateAdminToken(token: string | null) {
   if (!token) return null;
+  const password = (env as unknown as Record<string, unknown>).ADMIN_PASSWORD;
+  if (typeof password !== "string") return null;
   const db = await ensureGameSchema();
-  const tokenHash = await hashSecret(token);
+  const tokenHash = await hashSecret(`${token}|${password}`);
   const session = await db.prepare(
     "SELECT token_hash FROM admin_sessions WHERE token_hash = ? AND expires_at > CURRENT_TIMESTAMP LIMIT 1",
   ).bind(tokenHash).first<{ tokenHash: string }>();
