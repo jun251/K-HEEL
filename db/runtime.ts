@@ -1,12 +1,41 @@
-import { env } from "cloudflare:workers";
+export interface GamePreparedStatement {
+  bind(...values: unknown[]): GamePreparedStatement;
+  first<T>(): Promise<T | null>;
+  all<T>(): Promise<{ results: T[] }>;
+  run(): Promise<unknown>;
+}
 
-export function getD1() {
-  if (!env.DB) throw new Error("결과 저장소가 아직 연결되지 않았습니다.");
-  return env.DB;
+export interface GameDatabase {
+  prepare(query: string): GamePreparedStatement;
+  batch(statements: GamePreparedStatement[]): Promise<unknown>;
+}
+
+async function getD1(): Promise<GameDatabase | null> {
+  if (process.env.NETLIFY || process.env.CONTEXT) return null;
+
+  const moduleName = "cloudflare:workers";
+  const { env } = (await import(moduleName)) as {
+    env: Record<string, unknown>;
+  };
+  const candidate = env.DB;
+  if (
+    candidate &&
+    typeof candidate === "object" &&
+    "prepare" in candidate &&
+    "batch" in candidate
+  ) {
+    return candidate as GameDatabase;
+  }
+  return null;
 }
 
 export async function ensureGameSchema() {
-  const db = getD1();
+  const db = await getD1();
+  if (!db) {
+    const { getNetlifyDatabase } = await import("./netlify-runtime");
+    return getNetlifyDatabase();
+  }
+
   await db.batch([
     db.prepare("CREATE TABLE IF NOT EXISTS rooms (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
     db.prepare("CREATE TABLE IF NOT EXISTS players (id INTEGER PRIMARY KEY AUTOINCREMENT, room_code TEXT NOT NULL, nickname TEXT NOT NULL, grade_band TEXT NOT NULL, session_token TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),

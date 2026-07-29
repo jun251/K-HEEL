@@ -1,9 +1,9 @@
-import { env } from "cloudflare:workers";
+import { getPlatformValue } from "../../../../db/platform-env";
 import { ensureGameSchema } from "../../../../db/runtime";
 import { hashSecret } from "../../../access";
 
-function configuredPassword() {
-  return (env as unknown as Record<string, unknown>).ADMIN_PASSWORD;
+async function configuredPassword() {
+  return getPlatformValue("ADMIN_PASSWORD");
 }
 
 export async function POST(request: Request) {
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     const payload = (await request.json()) as { password?: string };
     const supplied = payload.password ?? "";
-    const expected = configuredPassword();
+    const expected = await configuredPassword();
     if (typeof expected !== "string" || expected.length < 8) {
       return Response.json({ error: "관리자 비밀번호가 아직 설정되지 않았습니다." }, { status: 503 });
     }
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
           failed_count = excluded.failed_count,
           window_started_at = CASE WHEN ? THEN admin_login_attempts.window_started_at ELSE CURRENT_TIMESTAMP END,
           locked_until = excluded.locked_until
-      `).bind(clientKey, failedCount, lockedUntil, withinWindow ? 1 : 0).run();
+      `).bind(clientKey, failedCount, lockedUntil, Boolean(withinWindow)).run();
       return Response.json({ error: "비밀번호가 올바르지 않습니다." }, { status: 401 });
     }
 
