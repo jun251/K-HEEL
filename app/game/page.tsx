@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import GradeGame, { GameOutcome } from "../GradeGame";
 
 type GradeBand = "1-2" | "3-4" | "5-6";
 type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand };
@@ -13,7 +14,7 @@ function isBlockingClassroomState(state: ClassroomState): state is BlockingClass
 
 const gradeInfo: Record<GradeBand, { label: string; title: string }> = {
   "1-2": { label: "1·2학년", title: "꼭 필요할까?" },
-  "3-4": { label: "3·4학년", title: "만원 장보기" },
+  "3-4": { label: "3·4학년", title: "합리적 소비왕 챌린지" },
   "5-6": { label: "5·6학년", title: "미래 통장" },
 };
 
@@ -90,7 +91,7 @@ export default function GameWindow() {
     };
   }, [player]);
 
-  const finishGame = async (score: number) => {
+  const finishGame = async ({ score, remainingBudget }: GameOutcome) => {
     if (!player) return;
     setLoading(true);
     setStatus("");
@@ -98,7 +99,7 @@ export default function GameWindow() {
       const response = await fetch("/api/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...player, score, gameId: `game-${player.gradeBand}` }),
+        body: JSON.stringify({ ...player, score, remainingBudget, gameId: `game-${player.gradeBand}` }),
       });
 
       if (!response.ok) throw new Error("점수 저장에 실패했습니다.");
@@ -143,7 +144,6 @@ export default function GameWindow() {
     </main>
   );
 }
-
 function ClassroomOverlay({ state }: { state: BlockingClassroomState }) {
   const content = {
     paused: {
@@ -165,21 +165,4 @@ function ClassroomOverlay({ state }: { state: BlockingClassroomState }) {
       <p>{content.copy}</p>
     </div>
   );
-}
-
-function GradeGame({ band, onFinish, disabled }: { band: GradeBand; onFinish: (score: number) => void; disabled: boolean }) {
-  const [choices, setChoices] = useState<number[]>([]);
-  const [done, setDone] = useState(false);
-  const options = band === "1-2"
-    ? [{ name: "아플 때 먹는 약", value: 20 }, { name: "새로 나온 장난감", value: 0 }, { name: "학교 갈 버스비", value: 20 }, { name: "유행하는 스티커", value: 0 }, { name: "점심 식사", value: 20 }]
-    : band === "3-4"
-      ? [{ name: "공책", price: 2000 }, { name: "간식", price: 3000 }, { name: "학용품", price: 4000 }, { name: "음료", price: 5000 }, { name: "저축", price: 1000 }]
-      : [{ name: "바로 오늘 쓰기", value: 20 }, { name: "절반 저축하기", value: 30 }, { name: "목표를 정해 저축하기", value: 50 }];
-  const selectedTotal = band === "3-4" ? choices.reduce((sum, idx) => sum + (options[idx] as { price: number }).price, 0) : 0;
-  const score = band === "1-2" ? choices.reduce((sum, idx) => sum + (options[idx] as { value: number }).value, 40) : band === "3-4" ? (selectedTotal <= 10000 && choices.length >= 3 ? 100 : Math.max(20, 100 - Math.abs(selectedTotal - 10000) / 100)) : choices.length ? (options[choices[0]] as { value: number }).value + 50 : 0;
-  const toggle = (index: number) => setChoices((current) => band === "5-6" ? [index] : current.includes(index) ? current.filter((item) => item !== index) : [...current, index]);
-
-  if (done) return <div className="game-complete"><span>🎉</span><h3>미션 완료!</h3><strong>{Math.round(score)}점</strong><p>{score >= 90 ? "경제 선택 달인! 계획과 필요를 모두 잘 생각했어요." : "좋은 시작이에요! 다음에는 예산과 미래도 함께 생각해 봐요."}</p><button className="primary-button" disabled={disabled} onClick={() => onFinish(Math.round(score))}>결과판에 기록하기</button></div>;
-
-  return <div className="mission"><div className="mission-question"><b>{band === "1-2" ? "꼭 필요한 것만 골라 보세요" : band === "3-4" ? "10,000원 안에서 3개 이상 골라 보세요" : "용돈 10,000원이 생겼어요. 어떻게 할까요?"}</b>{band === "3-4" && <span className={selectedTotal > 10000 ? "over" : ""}>{selectedTotal.toLocaleString()}원 / 10,000원</span>}</div><div className="choice-grid">{options.map((option, index) => <button key={option.name} className={choices.includes(index) ? "selected" : ""} onClick={() => toggle(index)}><span>{choices.includes(index) ? "✓" : "+"}</span><strong>{option.name}</strong>{"price" in option && <small>{option.price.toLocaleString()}원</small>}</button>)}</div><button className="primary-button finish" disabled={!choices.length} onClick={() => setDone(true)}>선택 완료하기 →</button></div>;
 }

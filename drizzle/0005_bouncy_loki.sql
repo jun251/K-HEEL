@@ -1,0 +1,1 @@
+ALTER TABLE `scores` ADD `remaining_budget` integer DEFAULT 0 NOT NULL;

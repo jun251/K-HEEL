@@ -1,14 +1,15 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import GradeGame, { GameOutcome } from "./GradeGame";
 
 type GradeBand = "1-2" | "3-4" | "5-6";
 type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand };
-type Result = { rank: number; nickname: string; gradeBand: GradeBand; score: number };
+type Result = { rank: number; nickname: string; gradeBand: GradeBand; score: number; remainingBudget?: number };
 
 const gradeInfo: Record<GradeBand, { label: string; title: string; copy: string; color: string }> = {
   "1-2": { label: "1·2학년", title: "꼭 필요할까?", copy: "필요한 것과 갖고 싶은 것을 구별해요.", color: "lime" },
-  "3-4": { label: "3·4학년", title: "만원 장보기", copy: "예산 안에서 똑똑하게 선택해요.", color: "yellow" },
+  "3-4": { label: "3·4학년", title: "합리적 소비왕 챌린지", copy: "15,000원 안에서 가격·품질·건강·환경을 함께 살펴요.", color: "yellow" },
   "5-6": { label: "5·6학년", title: "미래 통장", copy: "오늘의 선택이 내일을 어떻게 바꾸는지 알아봐요.", color: "blue" },
 };
 
@@ -177,14 +178,14 @@ export default function Home() {
     }
   };
 
-  const finishGame = async (score: number) => {
+  const finishGame = async ({ score, remainingBudget }: GameOutcome) => {
     if (!player) return;
     setLoading(true);
     try {
       const response = await fetch("/api/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...player, score, gameId: `game-${player.gradeBand}` }),
+        body: JSON.stringify({ ...player, score, remainingBudget, gameId: `game-${player.gradeBand}` }),
       });
       if (!response.ok) throw new Error("점수 저장에 실패했습니다.");
       await loadResults(player.roomCode);
@@ -283,27 +284,10 @@ export default function Home() {
 
       <section className="results-section" id="results">
         <div className="results-intro"><p className="eyebrow">우리 방 경제 리포트</p><h2>함께 쌓은<br/>오늘의 경제 감각</h2><p>입장코드가 같은 친구들의 최고 점수를 모았어요. 실명 대신 닉네임만 표시됩니다.</p><label>결과를 볼 입장코드<div className="result-search"><input value={resultRoom} onChange={(e) => setResultRoom(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric"/><button onClick={() => void loadResults(resultRoom)}>조회</button></div></label></div>
-        <div className="scoreboard"><div className="score-summary"><div><strong>{results.length || shownResults.length}</strong><span>참여 어린이</span></div><div><strong>{average}</strong><span>평균 점수</span></div><div><strong>{resultRoom}</strong><span>입장코드</span></div></div>{!results.length && <p className="demo-notice">아직 저장된 결과가 없어 예시 결과를 보여드려요.</p>}<ol>{shownResults.map((item, index) => <li key={`${item.nickname}-${index}`}><span className={`rank rank-${index + 1}`}>{index + 1}</span><div><strong>{item.nickname}</strong><small>{gradeInfo[item.gradeBand].label}</small></div><b>{item.score}<small>점</small></b></li>)}</ol></div>
+        <div className="scoreboard"><div className="score-summary"><div><strong>{results.length || shownResults.length}</strong><span>참여 어린이</span></div><div><strong>{average}</strong><span>평균 점수</span></div><div><strong>{resultRoom}</strong><span>입장코드</span></div></div>{!results.length && <p className="demo-notice">아직 저장된 결과가 없어 예시 결과를 보여드려요.</p>}<ol>{shownResults.map((item, index) => <li key={`${item.nickname}-${index}`}><span className={`rank rank-${index + 1}`}>{index + 1}</span><div><strong>{item.nickname}</strong><small>{gradeInfo[item.gradeBand].label}{item.gradeBand === "3-4" && item.remainingBudget !== undefined ? ` · 남은 돈 ${item.remainingBudget.toLocaleString()}원` : ""}</small></div><b>{item.score}<small>점</small></b></li>)}</ol></div>
       </section>
 
       <footer><div className="brand"><span>₩</span> 머니놀이터</div><p>선택하고, 도전하고, 함께 배우는 어린이 경제교육</p><small>학생의 실명과 연락처는 수집하지 않습니다.</small></footer>
     </main>
   );
-}
-
-function GradeGame({ band, onFinish, disabled }: { band: GradeBand; onFinish: (score: number) => void; disabled: boolean }) {
-  const [choices, setChoices] = useState<number[]>([]);
-  const [done, setDone] = useState(false);
-  const options = band === "1-2"
-    ? [{ name: "아플 때 먹는 약", value: 20 }, { name: "새로 나온 장난감", value: 0 }, { name: "학교에 갈 버스비", value: 20 }, { name: "유행하는 스티커", value: 0 }, { name: "점심 식사", value: 20 }]
-    : band === "3-4"
-      ? [{ name: "공책", price: 2000 }, { name: "간식", price: 3000 }, { name: "학용품", price: 4000 }, { name: "키링", price: 5000 }, { name: "저축", price: 1000 }]
-      : [{ name: "전부 오늘 쓰기", value: 20 }, { name: "절반 저축하기", value: 30 }, { name: "목표를 정해 저축하기", value: 50 }];
-  const selectedTotal = band === "3-4" ? choices.reduce((sum, idx) => sum + (options[idx] as { price: number }).price, 0) : 0;
-  const score = band === "1-2" ? choices.reduce((sum, idx) => sum + (options[idx] as { value: number }).value, 40) : band === "3-4" ? (selectedTotal <= 10000 && choices.length >= 3 ? 100 : Math.max(20, 100 - Math.abs(selectedTotal - 10000) / 100)) : choices.length ? (options[choices[0]] as { value: number }).value + 50 : 0;
-  const toggle = (index: number) => setChoices((current) => band === "5-6" ? [index] : current.includes(index) ? current.filter((item) => item !== index) : [...current, index]);
-
-  if (done) return <div className="game-complete"><span>🎉</span><h3>미션 완료!</h3><strong>{Math.round(score)}점</strong><p>{score >= 90 ? "경제 선택 달인! 계획과 필요를 모두 잘 생각했어요." : "좋은 시작이에요! 다음에는 예산과 미래도 함께 생각해 봐요."}</p><button className="primary-button" disabled={disabled} onClick={() => onFinish(Math.round(score))}>결과판에 기록하기</button></div>;
-
-  return <div className="mission"><div className="mission-question"><b>{band === "1-2" ? "꼭 필요한 것만 골라 보세요" : band === "3-4" ? "10,000원 안에서 3개 이상 골라 보세요" : "용돈 10,000원이 생겼어요. 어떻게 할까요?"}</b>{band === "3-4" && <span className={selectedTotal > 10000 ? "over" : ""}>{selectedTotal.toLocaleString()}원 / 10,000원</span>}</div><div className="choice-grid">{options.map((option, index) => <button key={option.name} className={choices.includes(index) ? "selected" : ""} onClick={() => toggle(index)}><span>{choices.includes(index) ? "✓" : "+"}</span><strong>{option.name}</strong>{"price" in option && <small>{option.price.toLocaleString()}원</small>}</button>)}</div><button className="primary-button finish" disabled={!choices.length} onClick={() => setDone(true)}>선택 완료하기 →</button></div>;
 }

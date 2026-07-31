@@ -40,6 +40,7 @@ export const scores = sqliteTable("scores", {
   gradeBand: text("grade_band").notNull(),
   gameId: text("game_id").notNull(),
   score: integer("score").notNull(),
+  remainingBudget: integer("remaining_budget").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("scores_room_idx").on(table.roomCode), index("scores_player_idx").on(table.playerId)]);
 

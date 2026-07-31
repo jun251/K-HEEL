@@ -72,3 +72,24 @@ test("top navigation links to the education materials page before games", async 
   assert.match(route, /requireAdminApi/);
   assert.match(route, /MAX_FILE_SIZE/);
 });
+
+test("grade 3-4 game is the rational consumer challenge with five menus", async () => {
+  const [game, scores] = await Promise.all([
+    readFile(new URL("../app/GradeGame.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/scores/route.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(game, /합리적 소비왕 챌린지/);
+  assert.match(game, /STARTING_BUDGET = 15_000/);
+  assert.match(game, /구수한 된장찌개/);
+  assert.match(game, /김치볶음밥/);
+  assert.match(game, /채소카레/);
+  assert.match(game, /김치전/);
+  assert.match(game, /과일요거트/);
+  assert.match(game, /Math\.floor\(remaining \/ 1000\)/);
+  assert.match(game, /최고의 가성비상/);
+  assert.match(game, /친환경 소비상/);
+  assert.match(game, /건강 소비상/);
+  assert.match(game, /지역 경제 지킴이상/);
+  assert.match(scores, /remaining_budget DESC/);
+});

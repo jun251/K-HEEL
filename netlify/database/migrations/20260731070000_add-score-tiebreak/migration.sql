@@ -1,0 +1,2 @@
+ALTER TABLE scores
+ADD COLUMN remaining_budget INTEGER NOT NULL DEFAULT 0;
