@@ -51,3 +51,16 @@ test("Netlify functions never import the Cloudflare runtime", async () => {
   assert.match(platform, /AWS_LAMBDA_FUNCTION_NAME/);
   assert.match(platform, /LAMBDA_TASK_ROOT/);
 });
+
+test("top navigation links to the education materials page before games", async () => {
+  const [home, materials] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/materials/page.tsx", import.meta.url), "utf8"),
+  ]);
+
+  const materialsLink = home.indexOf('href="/materials">교육 자료');
+  const gamesLink = home.indexOf('href="#grades">게임 둘러보기');
+  assert.ok(materialsLink >= 0 && materialsLink < gamesLink);
+  assert.match(materials, /경제교육/);
+  assert.match(materials, /자료실/);
+});

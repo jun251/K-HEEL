@@ -207,7 +207,7 @@ export default function Home() {
           <button className="brand-secret" type="button" onClick={handleAdminLogoClick} aria-label="머니놀이터 로고"><span>₩</span></button>
           <a href="#top">머니놀이터</a>
         </div>
-        <nav><a href="#grades">게임 둘러보기</a><a href="#results">우리 방 결과</a><button className="teacher-login-link" onClick={() => setTeacherLoginOpen(true)}>선생님 로그인</button></nav>
+        <nav><a className="materials-nav-link" href="/materials">교육 자료</a><a href="#grades">게임 둘러보기</a><a href="#results">우리 방 결과</a><button className="teacher-login-link" onClick={() => setTeacherLoginOpen(true)}>선생님 로그인</button></nav>
       </header>
 
       {teacherLoginOpen && (
