@@ -1,7 +1,9 @@
+import { isNetlifyRuntime } from "./platform";
+
 export async function getPlatformValue(name: string) {
   const localValue = process.env[name];
   if (localValue) return localValue;
-  if (process.env.NETLIFY || process.env.CONTEXT) return undefined;
+  if (isNetlifyRuntime()) return undefined;
 
   const moduleName = "cloudflare:workers";
   const { env } = (await import(moduleName)) as {

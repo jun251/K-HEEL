@@ -43,3 +43,10 @@ test("student game follows classroom control state", async () => {
   assert.match(gamePage, /classroomState !== "active"/);
   assert.match(gamePage, /ClassroomOverlay/);
 });
+
+test("Netlify functions never import the Cloudflare runtime", async () => {
+  const platform = await readFile(new URL("../db/platform.ts", import.meta.url), "utf8");
+
+  assert.match(platform, /AWS_LAMBDA_FUNCTION_NAME/);
+  assert.match(platform, /LAMBDA_TASK_ROOT/);
+});

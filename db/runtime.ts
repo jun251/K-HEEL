@@ -1,3 +1,5 @@
+import { isNetlifyRuntime } from "./platform";
+
 export interface GamePreparedStatement {
   bind(...values: unknown[]): GamePreparedStatement;
   first<T>(): Promise<T | null>;
@@ -11,7 +13,7 @@ export interface GameDatabase {
 }
 
 async function getD1(): Promise<GameDatabase | null> {
-  if (process.env.NETLIFY || process.env.CONTEXT) return null;
+  if (isNetlifyRuntime()) return null;
 
   const moduleName = "cloudflare:workers";
   const { env } = (await import(moduleName)) as {
