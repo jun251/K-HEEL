@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from "react";
 type GradeBand = "1-2" | "3-4" | "5-6";
 type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand };
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
+type BlockingClassroomState = Extract<ClassroomState, "paused" | "ended">;
+
+function isBlockingClassroomState(state: ClassroomState): state is BlockingClassroomState {
+  return state === "paused" || state === "ended";
+}
 
 const gradeInfo: Record<GradeBand, { label: string; title: string }> = {
   "1-2": { label: "1·2학년", title: "꼭 필요할까?" },
@@ -57,7 +62,10 @@ export default function GameWindow() {
         if (disposed) return;
 
         setClassroomState(data.state);
-        if (data.state === "active" && previousClassroomState.current !== "active" && !completed.current) {
+        const wasBlocked = previousClassroomState.current
+          ? isBlockingClassroomState(previousClassroomState.current)
+          : true;
+        if (!isBlockingClassroomState(data.state) && wasBlocked && !completed.current) {
           void fetch("/api/progress", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -104,6 +112,8 @@ export default function GameWindow() {
     }
   };
 
+  const blockingState = isBlockingClassroomState(classroomState) ? classroomState : null;
+
   return (
     <main className="game-window-main">
       <header className="game-window-top">
@@ -119,8 +129,8 @@ export default function GameWindow() {
               <h2>{player.nickname}님, {gradeInfo[player.gradeBand].title}</h2>
               <p>정답보다 더 중요한 건 왜 그렇게 선택했는지 생각하는 거예요.</p>
             </div>
-            <GradeGame band={player.gradeBand} onFinish={finishGame} disabled={loading || classroomState !== "active"} />
-            {classroomState !== "active" && <ClassroomOverlay state={classroomState} nickname={player.nickname} />}
+            <GradeGame band={player.gradeBand} onFinish={finishGame} disabled={loading || blockingState !== null} />
+            {blockingState && <ClassroomOverlay state={blockingState} />}
           </>
         ) : (
           <div className="game-window-message">
@@ -134,13 +144,8 @@ export default function GameWindow() {
   );
 }
 
-function ClassroomOverlay({ state, nickname }: { state: Exclude<ClassroomState, "active">; nickname: string }) {
+function ClassroomOverlay({ state }: { state: BlockingClassroomState }) {
   const content = {
-    waiting: {
-      icon: "⏳",
-      title: `${nickname}님, 잠시 기다려 주세요`,
-      copy: "선생님이 게임을 시작하면 이 화면이 자동으로 열려요.",
-    },
     paused: {
       icon: "✋",
       title: "게임을 잠시 멈췄어요",

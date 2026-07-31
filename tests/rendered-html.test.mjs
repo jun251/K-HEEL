@@ -36,11 +36,12 @@ test("teacher dashboard controls every student screen and shows presence", async
   assert.match(studentStatusRoute, /student_presence/);
 });
 
-test("student game follows classroom control state", async () => {
+test("student game opens without teacher approval and still follows pause or end controls", async () => {
   const gamePage = await readFile(new URL("../app/game/page.tsx", import.meta.url), "utf8");
 
   assert.match(gamePage, /\/api\/classroom\/status/);
-  assert.match(gamePage, /classroomState !== "active"/);
+  assert.match(gamePage, /state === "paused" \|\| state === "ended"/);
+  assert.doesNotMatch(gamePage, /classroomState !== "active"/);
   assert.match(gamePage, /ClassroomOverlay/);
 });
 
