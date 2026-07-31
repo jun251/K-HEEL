@@ -37,12 +37,17 @@ test("teacher dashboard controls every student screen and shows presence", async
 });
 
 test("student game opens without teacher approval and still follows pause or end controls", async () => {
-  const gamePage = await readFile(new URL("../app/game/page.tsx", import.meta.url), "utf8");
+  const [gamePage, scoresRoute] = await Promise.all([
+    readFile(new URL("../app/game/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/scores/route.ts", import.meta.url), "utf8"),
+  ]);
 
   assert.match(gamePage, /\/api\/classroom\/status/);
   assert.match(gamePage, /state === "paused" \|\| state === "ended"/);
   assert.doesNotMatch(gamePage, /classroomState !== "active"/);
   assert.match(gamePage, /ClassroomOverlay/);
+  assert.match(scoresRoute, /control\?\.state === "paused" \|\| control\?\.state === "ended"/);
+  assert.doesNotMatch(scoresRoute, /control\?\.state !== "active"/);
 });
 
 test("Netlify functions never import the Cloudflare runtime", async () => {

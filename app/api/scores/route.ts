@@ -53,8 +53,8 @@ export async function POST(request: Request) {
     const control = await db.prepare(
       "SELECT state FROM classroom_controls WHERE room_code = ? LIMIT 1",
     ).bind(player.roomCode).first<{ state: string }>();
-    if (control?.state !== "active") {
-      return Response.json({ error: "선생님이 게임을 진행 중일 때만 결과를 저장할 수 있어요." }, { status: 409 });
+    if (control?.state === "paused" || control?.state === "ended") {
+      return Response.json({ error: "선생님이 수업을 다시 시작하면 결과를 저장할 수 있어요." }, { status: 409 });
     }
     await db.batch([
       db.prepare("INSERT INTO scores (player_id, room_code, grade_band, game_id, score, remaining_budget) VALUES (?, ?, ?, ?, ?, ?)")
