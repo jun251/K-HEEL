@@ -91,6 +91,11 @@ test("grade 3-4 game is the rational consumer challenge with five menus", async 
   assert.match(game, /채소카레/);
   assert.match(game, /김치전/);
   assert.match(game, /과일요거트/);
+  assert.match(game, /name: "재래된장"[\s\S]*?price: 5000, score: 9/);
+  assert.match(game, /name: "국내산 김치"[\s\S]*?price: 4000, score: 9/);
+  assert.match(game, /name: "못난이 감자"[\s\S]*?price: 1000, score: 8/);
+  assert.match(game, /name: "우리밀"[\s\S]*?price: 3000, score: 9/);
+  assert.match(game, /name: "못난이 사과"[\s\S]*?price: 1500, score: 9/);
   assert.match(game, /Math\.floor\(remaining \/ 1000\)/);
   assert.match(game, /최고의 가성비상/);
   assert.match(game, /친환경 소비상/);

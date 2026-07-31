@@ -35,24 +35,24 @@ const menus: Menu[] = [
     description: "된장과 신선한 채소를 골라 따뜻한 한 끼를 완성해요.",
     ingredients: [
       { name: "된장", choices: [
-        { name: "지역 전통 된장", description: "지역 농산물로 만든 깊은 맛", price: 4500, score: 10, values: ["local", "environment"] },
-        { name: "일반 된장", description: "가격 부담이 적은 기본 된장", price: 2200, score: 7, values: ["value"] },
+        { name: "일반 된장", description: "가격 부담이 적은 기본 된장", price: 3000, score: 7, values: ["value"] },
+        { name: "재래된장", description: "전통 방식의 깊은 맛을 살린 된장", price: 5000, score: 9, values: ["local"] },
       ] },
       { name: "두부", choices: [
-        { name: "국산콩 두부", description: "국산콩을 사용한 단단한 두부", price: 3500, score: 9, values: ["health", "local"] },
-        { name: "일반 두부", description: "찌개에 쓰기 좋은 실속 두부", price: 1800, score: 7, values: ["value"] },
+        { name: "수입 콩 두부", description: "수입 콩으로 만든 실속 두부", price: 2000, score: 6, values: ["value"] },
+        { name: "국내산 콩 두부", description: "국내산 콩으로 만든 두부", price: 3500, score: 8, values: ["local"] },
       ] },
       { name: "애호박", choices: [
-        { name: "무농약 애호박", description: "농약 사용을 줄여 키운 채소", price: 3000, score: 9, values: ["health", "environment"] },
         { name: "일반 애호박", description: "가까운 마트의 보통 애호박", price: 1500, score: 7, values: ["value"] },
+        { name: "친환경 애호박", description: "환경을 생각해 재배한 애호박", price: 2500, score: 8, values: ["health", "environment"] },
       ] },
       { name: "양파", choices: [
-        { name: "지역 농가 양파", description: "우리 지역 농가에서 온 양파", price: 2500, score: 9, values: ["local"] },
-        { name: "수입 양파", description: "가격이 낮은 수입 양파", price: 1200, score: 6, values: ["value"] },
+        { name: "일반 양파", description: "가격 부담이 적은 기본 양파", price: 1000, score: 7, values: ["value"] },
+        { name: "지역 농가 양파", description: "우리 지역 농가에서 온 양파", price: 2000, score: 8, values: ["local"] },
       ] },
       { name: "당근", choices: [
-        { name: "친환경 당근", description: "환경을 생각해 재배한 당근", price: 2800, score: 9, values: ["health", "environment"] },
-        { name: "일반 당근", description: "필요한 만큼만 포장한 당근", price: 1400, score: 7, values: ["value"] },
+        { name: "못난이 당근", description: "모양은 달라도 맛과 품질은 좋은 당근", price: 800, score: 8, values: ["value", "environment"] },
+        { name: "프리미엄 당근", description: "보기 좋게 선별한 고급 당근", price: 1800, score: 7, values: [] },
       ] },
     ],
   },
@@ -63,24 +63,24 @@ const menus: Menu[] = [
     description: "쌀, 김치, 달걀을 균형 있게 골라 든든한 볶음밥을 만들어요.",
     ingredients: [
       { name: "쌀", choices: [
-        { name: "지역 햅쌀", description: "가까운 지역에서 수확한 햅쌀", price: 3500, score: 9, values: ["local"] },
-        { name: "혼합미", description: "가격을 낮춘 실속 혼합 쌀", price: 2200, score: 7, values: ["value"] },
+        { name: "일반 쌀", description: "가격과 품질이 안정적인 쌀", price: 2000, score: 7, values: ["value"] },
+        { name: "친환경 쌀", description: "환경을 생각해 재배한 쌀", price: 3500, score: 9, values: ["health", "environment"] },
       ] },
       { name: "김치", choices: [
-        { name: "국내산 재료 김치", description: "국내산 채소와 양념을 사용", price: 4000, score: 10, values: ["health", "local"] },
-        { name: "일반 김치", description: "가격 부담이 적은 보통 김치", price: 2300, score: 6, values: ["value"] },
+        { name: "수입 김치", description: "가격 부담이 적은 수입 김치", price: 2500, score: 6, values: ["value"] },
+        { name: "국내산 김치", description: "국내산 재료로 만든 김치", price: 4000, score: 9, values: ["local"] },
       ] },
       { name: "달걀", choices: [
-        { name: "동물복지 달걀", description: "닭의 사육 환경을 생각한 달걀", price: 3200, score: 9, values: ["health", "environment"] },
-        { name: "일반 달걀", description: "가격과 영양을 고루 갖춘 달걀", price: 1800, score: 7, values: ["value"] },
+        { name: "일반 달걀", description: "가격과 영양을 고루 갖춘 달걀", price: 1500, score: 7, values: ["value"] },
+        { name: "동물복지 달걀", description: "닭의 사육 환경을 생각한 달걀", price: 2500, score: 8, values: ["health", "environment"] },
       ] },
       { name: "식용유", choices: [
-        { name: "현미유", description: "적은 양으로도 고소한 현미유", price: 2600, score: 8, values: ["health"] },
-        { name: "일반 식용유", description: "여러 요리에 쓰는 실속 식용유", price: 1800, score: 8, values: ["value"] },
+        { name: "일반 식용유", description: "여러 요리에 쓰는 실속 식용유", price: 1000, score: 7, values: ["value"] },
+        { name: "올리브유", description: "건강을 생각한 식용유 선택", price: 3000, score: 6, values: ["health"] },
       ] },
       { name: "햄", choices: [
-        { name: "저염 햄", description: "나트륨을 줄인 건강 햄", price: 3500, score: 9, values: ["health"] },
-        { name: "일반 햄", description: "가격이 낮고 익숙한 맛의 햄", price: 2200, score: 6, values: ["value"] },
+        { name: "일반 햄", description: "가격이 낮고 익숙한 맛의 햄", price: 2000, score: 7, values: ["value"] },
+        { name: "무첨가 햄", description: "첨가물을 줄인 햄", price: 3500, score: 8, values: ["health"] },
       ] },
     ],
   },
@@ -91,24 +91,24 @@ const menus: Menu[] = [
     description: "여러 채소의 가격과 품질을 비교해 알찬 카레를 만들어요.",
     ingredients: [
       { name: "쌀", choices: [
-        { name: "지역 무농약 쌀", description: "지역에서 친환경 방식으로 재배", price: 4200, score: 10, values: ["local", "environment"] },
-        { name: "일반 쌀", description: "가격과 품질이 안정적인 쌀", price: 2400, score: 7, values: ["value"] },
+        { name: "일반 쌀", description: "가격과 품질이 안정적인 쌀", price: 2000, score: 7, values: ["value"] },
+        { name: "친환경 쌀", description: "환경을 생각해 재배한 쌀", price: 3500, score: 9, values: ["health", "environment"] },
       ] },
       { name: "카레가루", choices: [
-        { name: "저염 카레가루", description: "나트륨을 줄인 카레가루", price: 3200, score: 9, values: ["health"] },
-        { name: "일반 카레가루", description: "익숙한 맛의 실속 제품", price: 1900, score: 7, values: ["value"] },
+        { name: "일반 카레", description: "익숙한 맛의 실속 제품", price: 2000, score: 7, values: ["value"] },
+        { name: "저염 카레", description: "나트륨을 줄인 카레", price: 3000, score: 8, values: ["health"] },
       ] },
       { name: "감자", choices: [
-        { name: "지역 햇감자", description: "가까운 농가에서 수확한 감자", price: 2800, score: 9, values: ["local"] },
-        { name: "일반 감자", description: "가격이 낮은 묶음 감자", price: 1600, score: 7, values: ["value"] },
+        { name: "일반 감자", description: "가격이 안정적인 일반 감자", price: 1500, score: 7, values: ["value"] },
+        { name: "못난이 감자", description: "모양은 달라도 맛과 품질은 좋은 감자", price: 1000, score: 8, values: ["value", "environment"] },
       ] },
       { name: "당근", choices: [
-        { name: "못난이 친환경 당근", description: "모양은 달라도 맛과 품질은 좋아요", price: 2200, score: 10, values: ["value", "environment"] },
-        { name: "모양 좋은 일반 당근", description: "보기 좋게 골라 담은 당근", price: 2700, score: 7, values: [] },
+        { name: "일반 당근", description: "가격 부담이 적은 기본 당근", price: 1500, score: 7, values: ["value"] },
+        { name: "친환경 당근", description: "환경을 생각해 재배한 당근", price: 2500, score: 8, values: ["health", "environment"] },
       ] },
       { name: "양파", choices: [
-        { name: "지역 양파", description: "지역 경제에 도움을 주는 양파", price: 2400, score: 9, values: ["local"] },
-        { name: "대용량 양파", description: "양은 많지만 남을 수 있는 포장", price: 3000, score: 6, values: ["value"] },
+        { name: "일반 양파", description: "가격 부담이 적은 기본 양파", price: 1000, score: 7, values: ["value"] },
+        { name: "지역 농가 양파", description: "지역 경제에 도움을 주는 양파", price: 2000, score: 8, values: ["local"] },
       ] },
     ],
   },
@@ -119,24 +119,24 @@ const menus: Menu[] = [
     description: "필요한 재료를 알맞게 골라 바삭한 김치전을 완성해요.",
     ingredients: [
       { name: "밀가루", choices: [
-        { name: "우리밀 밀가루", description: "국내에서 기른 밀로 만든 제품", price: 3200, score: 9, values: ["local"] },
-        { name: "일반 밀가루", description: "가격 부담이 적은 기본 제품", price: 1800, score: 7, values: ["value"] },
+        { name: "일반 밀가루", description: "가격 부담이 적은 기본 제품", price: 1500, score: 7, values: ["value"] },
+        { name: "우리밀", description: "국내에서 기른 밀로 만든 제품", price: 3000, score: 9, values: ["local"] },
       ] },
       { name: "달걀", choices: [
-        { name: "동물복지 달걀", description: "사육 환경까지 생각한 달걀", price: 3200, score: 9, values: ["health", "environment"] },
-        { name: "일반 달걀", description: "필요한 만큼 소포장한 달걀", price: 1900, score: 7, values: ["value"] },
+        { name: "일반 달걀", description: "필요한 만큼 소포장한 달걀", price: 1500, score: 7, values: ["value"] },
+        { name: "동물복지 달걀", description: "사육 환경까지 생각한 달걀", price: 2500, score: 8, values: ["health", "environment"] },
       ] },
       { name: "김치", choices: [
-        { name: "지역 농산물 김치", description: "지역 채소로 만든 김치", price: 4200, score: 10, values: ["local", "health"] },
-        { name: "일반 김치", description: "가격이 낮은 대용량 김치", price: 2400, score: 6, values: ["value"] },
+        { name: "수입 김치", description: "가격 부담이 적은 수입 김치", price: 2500, score: 6, values: ["value"] },
+        { name: "국내산 김치", description: "국내산 재료로 만든 김치", price: 4000, score: 9, values: ["local"] },
       ] },
       { name: "식용유", choices: [
-        { name: "유기농 해바라기유", description: "환경을 고려한 인증 제품", price: 3800, score: 9, values: ["health", "environment"] },
-        { name: "일반 식용유", description: "가격 대비 활용도가 높은 제품", price: 1800, score: 8, values: ["value"] },
+        { name: "일반 식용유", description: "가격 대비 활용도가 높은 제품", price: 1000, score: 8, values: ["value"] },
+        { name: "올리브유", description: "건강을 생각한 식용유 선택", price: 3000, score: 6, values: ["health"] },
       ] },
       { name: "부추", choices: [
-        { name: "지역 무농약 부추", description: "가까운 농가의 무농약 부추", price: 2600, score: 10, values: ["local", "environment"] },
         { name: "일반 부추", description: "필요한 양만 담은 일반 부추", price: 1500, score: 7, values: ["value"] },
+        { name: "친환경 부추", description: "환경을 생각해 재배한 부추", price: 2500, score: 8, values: ["health", "environment"] },
       ] },
     ],
   },
@@ -147,24 +147,24 @@ const menus: Menu[] = [
     description: "건강, 환경, 가격을 살펴 상큼한 간식을 만들어요.",
     ingredients: [
       { name: "요거트", choices: [
-        { name: "무가당 요거트", description: "첨가당을 줄인 건강한 요거트", price: 3500, score: 10, values: ["health"] },
-        { name: "달콤한 요거트", description: "가격이 낮고 단맛이 강한 제품", price: 2200, score: 6, values: ["value"] },
+        { name: "플레인 요거트", description: "담백한 기본 요거트", price: 2000, score: 8, values: ["value", "health"] },
+        { name: "유기농 요거트", description: "환경과 건강을 생각한 요거트", price: 3500, score: 9, values: ["health", "environment"] },
       ] },
       { name: "바나나", choices: [
-        { name: "공정무역 바나나", description: "생산자의 정당한 대가를 생각해요", price: 3200, score: 9, values: ["environment"] },
-        { name: "일반 바나나", description: "가격이 저렴한 묶음 바나나", price: 1800, score: 7, values: ["value"] },
+        { name: "수입 바나나", description: "가격이 저렴한 수입 바나나", price: 1500, score: 7, values: ["value"] },
+        { name: "친환경 바나나", description: "환경을 생각해 재배한 바나나", price: 2500, score: 8, values: ["health", "environment"] },
       ] },
       { name: "사과", choices: [
-        { name: "지역 못난이 사과", description: "모양 때문에 버려질 과일을 활용", price: 2500, score: 10, values: ["value", "local", "environment"] },
-        { name: "반짝이는 대과 사과", description: "크고 보기 좋게 선별한 사과", price: 3800, score: 7, values: [] },
+        { name: "일반 사과", description: "보기 좋게 선별한 일반 사과", price: 2000, score: 7, values: [] },
+        { name: "못난이 사과", description: "모양 때문에 버려질 과일을 활용", price: 1500, score: 9, values: ["value", "environment"] },
       ] },
       { name: "딸기", choices: [
-        { name: "제철 지역 딸기", description: "제철에 가까운 농가에서 온 딸기", price: 4200, score: 10, values: ["local", "environment"] },
-        { name: "냉동 수입 딸기", description: "오래 보관하기 쉬운 수입 딸기", price: 2600, score: 7, values: ["value"] },
+        { name: "일반 딸기", description: "가격과 품질이 안정적인 딸기", price: 3000, score: 7, values: ["value"] },
+        { name: "지역 농가 딸기", description: "가까운 지역 농가에서 온 딸기", price: 4000, score: 8, values: ["local"] },
       ] },
       { name: "꿀", choices: [
-        { name: "지역 양봉 꿀", description: "지역 양봉 농가가 만든 꿀", price: 3500, score: 9, values: ["local"] },
-        { name: "당류 시럽", description: "꿀보다 저렴한 단맛 재료", price: 1200, score: 5, values: ["value"] },
+        { name: "일반 꿀", description: "가격 부담이 적은 일반 꿀", price: 2000, score: 7, values: ["value"] },
+        { name: "천연 벌꿀", description: "자연에서 얻은 천연 벌꿀", price: 3500, score: 9, values: ["health", "environment"] },
       ] },
     ],
   },
