@@ -24,6 +24,9 @@ export async function ensureGameSchema() {
     db.prepare("CREATE TABLE IF NOT EXISTS admin_login_attempts (client_key TEXT PRIMARY KEY, failed_count INTEGER NOT NULL DEFAULT 0, window_started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, locked_until TEXT)"),
     db.prepare("CREATE TABLE IF NOT EXISTS player_progress (player_id INTEGER PRIMARY KEY, room_code TEXT NOT NULL, game_id TEXT NOT NULL, status TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
     db.prepare("CREATE INDEX IF NOT EXISTS player_progress_room_idx ON player_progress(room_code)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS classroom_controls (room_code TEXT PRIMARY KEY, state TEXT NOT NULL DEFAULT 'waiting', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS student_presence (player_id INTEGER PRIMARY KEY, room_code TEXT NOT NULL, last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS student_presence_room_idx ON student_presence(room_code)"),
     db.prepare("CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, actor_email TEXT NOT NULL, action TEXT NOT NULL, target_type TEXT NOT NULL, target_id TEXT NOT NULL, before_value TEXT, after_value TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
     db.prepare("CREATE INDEX IF NOT EXISTS audit_logs_target_idx ON audit_logs(target_type, target_id)"),
   ]);

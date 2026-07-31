@@ -21,3 +21,25 @@ test("join API resolves identity and grade from the student code", async () => {
   assert.doesNotMatch(route, /payload\.nickname/);
   assert.doesNotMatch(route, /payload\.gradeBand/);
 });
+
+test("teacher dashboard controls every student screen and shows presence", async () => {
+  const [teacherPage, controlRoute, studentStatusRoute] = await Promise.all([
+    readFile(new URL("../app/teacher/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/teacher/control/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/classroom/status/route.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(teacherPage, /게임 시작·재개/);
+  assert.match(teacherPage, /일시정지/);
+  assert.match(teacherPage, /현재 접속/);
+  assert.match(controlRoute, /classroom_controls/);
+  assert.match(studentStatusRoute, /student_presence/);
+});
+
+test("student game follows classroom control state", async () => {
+  const gamePage = await readFile(new URL("../app/game/page.tsx", import.meta.url), "utf8");
+
+  assert.match(gamePage, /\/api\/classroom\/status/);
+  assert.match(gamePage, /classroomState !== "active"/);
+  assert.match(gamePage, /ClassroomOverlay/);
+});
