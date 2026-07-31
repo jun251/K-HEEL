@@ -85,6 +85,18 @@ export const playerProgress = sqliteTable("player_progress", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("player_progress_room_idx").on(table.roomCode)]);
 
+export const classroomControls = sqliteTable("classroom_controls", {
+  roomCode: text("room_code").primaryKey(),
+  state: text("state").notNull().default("waiting"),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const studentPresence = sqliteTable("student_presence", {
+  playerId: integer("player_id").primaryKey(),
+  roomCode: text("room_code").notNull(),
+  lastSeenAt: text("last_seen_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("student_presence_room_idx").on(table.roomCode)]);
+
 export const auditLogs = sqliteTable("audit_logs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   actorEmail: text("actor_email").notNull(),

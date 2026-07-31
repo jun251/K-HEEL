@@ -29,6 +29,12 @@ export async function POST(request: Request) {
     const db = await ensureGameSchema();
     const player = await db.prepare("SELECT id, room_code AS roomCode, grade_band AS gradeBand FROM players WHERE session_token = ? LIMIT 1").bind(payload.token).first<{ id: number; roomCode: string; gradeBand: string }>();
     if (!player || player.roomCode !== payload.roomCode) return Response.json({ error: "다시 입장해 주세요." }, { status: 401 });
+    const control = await db.prepare(
+      "SELECT state FROM classroom_controls WHERE room_code = ? LIMIT 1",
+    ).bind(player.roomCode).first<{ state: string }>();
+    if (control?.state !== "active") {
+      return Response.json({ error: "선생님이 게임을 진행 중일 때만 결과를 저장할 수 있어요." }, { status: 409 });
+    }
     await db.batch([
       db.prepare("INSERT INTO scores (player_id, room_code, grade_band, game_id, score) VALUES (?, ?, ?, ?, ?)")
         .bind(player.id, player.roomCode, player.gradeBand, payload.gameId, score),
