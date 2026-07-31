@@ -10,6 +10,7 @@ function toPostgresQuery(source: string) {
     .replace(/\bINSERT\s+OR\s+IGNORE\s+INTO\b/gi, "INSERT INTO")
     .replace(/\?/g, () => `$${++parameter}`)
     .replace(/\bAS\s+([a-z][A-Za-z0-9]*[A-Z][A-Za-z0-9]*)\b/g, 'AS "$1"')
+    .replace(/datetime\('now',\s*'-15 seconds'\)/gi, "(CURRENT_TIMESTAMP - INTERVAL '15 seconds')")
     .trim()
     .replace(/;$/, "");
 
