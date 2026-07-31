@@ -1,26 +1,4 @@
-const materialSections = [
-  {
-    number: "01",
-    icon: "✎",
-    title: "교사용 수업자료",
-    description: "수업 안내서와 진행 자료를 모아 제공할 예정입니다.",
-    color: "lime",
-  },
-  {
-    number: "02",
-    icon: "▤",
-    title: "학생 활동지",
-    description: "게임과 함께 활용할 수 있는 활동지가 등록될 예정입니다.",
-    color: "yellow",
-  },
-  {
-    number: "03",
-    icon: "⌂",
-    title: "가정 연계자료",
-    description: "가정에서도 경제 이야기를 이어갈 수 있는 자료를 준비 중입니다.",
-    color: "blue",
-  },
-] as const;
+import MaterialsLibrary from "./MaterialsLibrary";
 
 export default function MaterialsPage() {
   return (
@@ -49,8 +27,8 @@ export default function MaterialsPage() {
         </div>
         <div className="materials-hero-note">
           <span>자료실 안내</span>
-          <strong>수업에 바로 활용할 자료를<br />차례대로 공개할게요.</strong>
-          <p>새로운 자료가 등록되면 이 페이지에서 확인할 수 있습니다.</p>
+          <strong>학년 수준에 맞는 자료를<br />골라서 활용해 보세요.</strong>
+          <p>1·2학년, 3·4학년, 5·6학년 자료를 나누어 제공합니다.</p>
         </div>
       </section>
 
@@ -60,26 +38,16 @@ export default function MaterialsPage() {
             <p className="eyebrow">RESOURCE LIBRARY</p>
             <h2 id="materials-heading">교육 자료 모아보기</h2>
           </div>
-          <p>자료가 준비되는 대로 각 항목에서 내려받거나 바로 볼 수 있게 됩니다.</p>
+          <p>학년군을 확인하고 필요한 파일을 바로 내려받을 수 있습니다.</p>
         </div>
 
-        <div className="materials-grid">
-          {materialSections.map((material) => (
-            <article className={`material-card ${material.color}`} key={material.title}>
-              <span className="material-number">{material.number}</span>
-              <div className="material-icon" aria-hidden="true">{material.icon}</div>
-              <span className="material-status">자료 준비 중</span>
-              <h3>{material.title}</h3>
-              <p>{material.description}</p>
-            </article>
-          ))}
-        </div>
+        <MaterialsLibrary />
       </section>
 
       <footer className="materials-footer">
         <div className="brand"><span>₩</span> 머니놀이터</div>
         <p>놀이와 자료로 함께 배우는 어린이 경제교육</p>
-        <small>교육 자료는 순차적으로 업데이트됩니다.</small>
+        <small>교육 자료는 학년군별로 업데이트됩니다.</small>
       </footer>
     </main>
   );

@@ -53,9 +53,11 @@ test("Netlify functions never import the Cloudflare runtime", async () => {
 });
 
 test("top navigation links to the education materials page before games", async () => {
-  const [home, materials] = await Promise.all([
+  const [home, materials, library, route] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/materials/MaterialsLibrary.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/materials/route.ts", import.meta.url), "utf8"),
   ]);
 
   const materialsLink = home.indexOf('href="/materials">교육 자료');
@@ -63,4 +65,10 @@ test("top navigation links to the education materials page before games", async 
   assert.ok(materialsLink >= 0 && materialsLink < gamesLink);
   assert.match(materials, /경제교육/);
   assert.match(materials, /자료실/);
+  assert.match(library, /1·2학년 자료/);
+  assert.match(library, /3·4학년 자료/);
+  assert.match(library, /5·6학년 자료/);
+  assert.match(library, /관리자 자료 올리기/);
+  assert.match(route, /requireAdminApi/);
+  assert.match(route, /MAX_FILE_SIZE/);
 });
