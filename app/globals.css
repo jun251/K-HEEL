@@ -31,11 +31,6 @@ h1 em::after { content:""; position:absolute; height:13px; background:var(--yell
 .join-card input,.result-search input { width:100%; border:1.5px solid #b9c6c0; background:white; border-radius:12px; padding:14px 15px; font-size:17px; outline:none; margin-top:8px; }
 .join-card input:focus,.result-search input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(12,107,79,.12); }
 .join-card small { display:block; color:#72847d; margin:-3px 0 18px; font-size:12px; }
-fieldset { border:0; padding:0; margin:18px 0 22px; }
-legend { font-size:14px; font-weight:900; margin-bottom:9px; }
-.grade-pills { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
-.grade-pills button { border:1.5px solid #c7d1cc; background:#fff; border-radius:10px; padding:11px 4px; font-weight:800; cursor:pointer; }
-.grade-pills button.active { background:var(--ink); color:white; border-color:var(--ink); }
 .primary-button { border:0; background:var(--green); color:white; border-radius:12px; width:100%; padding:16px; font-weight:900; cursor:pointer; box-shadow:0 4px 0 #074d39; transition:.15s; }
 .primary-button:hover { transform:translateY(-2px); }
 .primary-button:disabled { opacity:.55; cursor:not-allowed; transform:none; }

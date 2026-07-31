@@ -16,6 +16,23 @@ export const players = sqliteTable("players", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [uniqueIndex("players_token_unique").on(table.sessionToken), index("players_room_idx").on(table.roomCode)]);
 
+export const studentAccessCodes = sqliteTable("student_access_codes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  codeHash: text("code_hash").notNull(),
+  codeHint: text("code_hint").notNull(),
+  studentName: text("student_name").notNull(),
+  gradeBand: text("grade_band").notNull(),
+  roomCode: text("room_code").notNull(),
+  playerId: integer("player_id"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdBy: text("created_by"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("student_access_codes_hash_unique").on(table.codeHash),
+  index("student_access_codes_room_idx").on(table.roomCode),
+]);
+
 export const scores = sqliteTable("scores", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   playerId: integer("player_id").notNull(),

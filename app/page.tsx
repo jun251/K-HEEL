@@ -19,9 +19,7 @@ const demoResults: Result[] = [
 ];
 
 export default function Home() {
-  const [roomCode, setRoomCode] = useState("2407");
-  const [nickname, setNickname] = useState("");
-  const [gradeBand, setGradeBand] = useState<GradeBand>("1-2");
+  const [studentCode, setStudentCode] = useState("");
   const [player] = useState<Player | null>(null);
   const [results, setResults] = useState<Result[]>([]);
   const [resultRoom, setResultRoom] = useState("2407");
@@ -66,19 +64,18 @@ export default function Home() {
 
   const joinRoom = async (event: FormEvent) => {
     event.preventDefault();
-    if (!/^\d{4,6}$/.test(roomCode)) return setStatus("입장코드는 숫자 4~6자리로 입력해 주세요.");
-    if (nickname.trim().length < 2) return setStatus("닉네임을 두 글자 이상 입력해 주세요.");
+    if (!/^[A-Z0-9-]{4,20}$/.test(studentCode)) return setStatus("학생 코드를 정확히 입력해 주세요.");
     setLoading(true);
     setStatus("");
     try {
       const response = await fetch("/api/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomCode, nickname, gradeBand }),
+        body: JSON.stringify({ code: studentCode }),
       });
       const data = (await response.json()) as Player & { error?: string };
       if (!response.ok) throw new Error(data.error || "입장할 수 없습니다.");
-      setResultRoom(roomCode);
+      setResultRoom(data.roomCode);
       window.localStorage.setItem(`kheel-player-${data.token}`, JSON.stringify(data));
 
       const gameUrl = new URL("/game", window.location.origin);
@@ -91,7 +88,7 @@ export default function Home() {
 
       if (gameWindow) {
         gameWindow.focus();
-        setStatus("게임창이 열렸어요. 게임을 마치면 결과판이 자동으로 갱신됩니다.");
+        setStatus(`${data.nickname}님을 확인했어요. ${gradeInfo[data.gradeBand].label} 게임을 열었습니다.`);
       } else {
         setStatus("팝업이 차단됐어요. 브라우저에서 팝업 허용 후 다시 입장해 주세요.");
       }
@@ -270,10 +267,8 @@ export default function Home() {
 
         <form className="join-card" onSubmit={joinRoom}>
           <div className="card-label">지금 바로 참여하기</div>
-          <label>입장코드<input value={roomCode} onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" aria-describedby="code-help" /></label>
-          <small id="code-help">선생님이 알려준 숫자 코드를 입력하세요.</small>
-          <label>닉네임<input value={nickname} onChange={(e) => setNickname(e.target.value.slice(0, 10))} placeholder="예: 알뜰토끼" /></label>
-          <fieldset><legend>나의 학년군</legend><div className="grade-pills">{(Object.keys(gradeInfo) as GradeBand[]).map((band) => <button className={gradeBand === band ? "active" : ""} type="button" key={band} onClick={() => setGradeBand(band)}>{gradeInfo[band].label}</button>)}</div></fieldset>
+          <label>학생 코드<input value={studentCode} onChange={(e) => setStudentCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20))} placeholder="선생님이 알려준 코드" autoComplete="off" aria-describedby="code-help" /></label>
+          <small id="code-help">코드를 입력하면 이름과 학년을 자동으로 확인해요.</small>
           <button className="primary-button" disabled={loading}>{loading ? "잠시만요…" : "게임방 입장하기 →"}</button>
           {status && <p className="form-status" role="status">{status}</p>}
         </form>
@@ -281,7 +276,7 @@ export default function Home() {
 
       <section className="section" id="grades">
         <div className="section-heading"><div><p className="eyebrow">학년별 맞춤 미션</p><h2>내 학년에 딱 맞는 경제 게임</h2></div><p>쉬운 선택부터 미래 계획까지,<br/>한 단계씩 경제 근육을 키워요.</p></div>
-        <div className="grade-grid">{(Object.keys(gradeInfo) as GradeBand[]).map((band, index) => <article className={`grade-card ${gradeInfo[band].color}`} key={band}><div className="grade-number">0{index + 1}</div><span className="grade-tag">{gradeInfo[band].label}</span><div className="game-icon" aria-hidden="true">{band === "1-2" ? "🛒" : band === "3-4" ? "🧺" : "🌱"}</div><h3>{gradeInfo[band].title}</h3><p>{gradeInfo[band].copy}</p><button onClick={() => { setGradeBand(band); document.querySelector<HTMLInputElement>('.join-card input')?.focus(); }}>이 게임 시작하기 <span>→</span></button></article>)}</div>
+        <div className="grade-grid">{(Object.keys(gradeInfo) as GradeBand[]).map((band, index) => <article className={`grade-card ${gradeInfo[band].color}`} key={band}><div className="grade-number">0{index + 1}</div><span className="grade-tag">{gradeInfo[band].label}</span><div className="game-icon" aria-hidden="true">{band === "1-2" ? "🛒" : band === "3-4" ? "🧺" : "🌱"}</div><h3>{gradeInfo[band].title}</h3><p>{gradeInfo[band].copy}</p><button onClick={() => { document.querySelector<HTMLInputElement>('.join-card input')?.focus(); }}>학생 코드 입력하기 <span>→</span></button></article>)}</div>
       </section>
 
       {player && <section className="game-section" id="game"><div className="game-shell"><div className="game-heading"><span>{gradeInfo[player.gradeBand].label} 미션</span><h2>{player.nickname}님, 준비됐나요?</h2><p>정답보다 더 중요한 건 왜 그렇게 선택했는지 생각하는 거예요.</p></div><GradeGame band={player.gradeBand} onFinish={finishGame} disabled={loading} /></div></section>}
