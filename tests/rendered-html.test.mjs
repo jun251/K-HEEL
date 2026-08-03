@@ -105,6 +105,10 @@ test("grade 3-4 game is the rational consumer challenge with five menus", async 
   assert.match(game, /menus\.filter\(\(menu\) => !completedMenuIds\.includes\(menu\.id\)\)/);
   assert.match(game, /선택하면 자동으로 다음 재료로 넘어갑니다/);
   assert.match(game, /setIngredientIndex\(\(current\) => current \+ 1\)/);
+  assert.match(game, /메뉴를 자동으로 배정하고 있어요/);
+  assert.match(game, /← 이전 재료/);
+  assert.match(game, /summary\.spent - currentChoicePrice \+ choice\.price/);
+  assert.doesNotMatch(game, /랜덤 메뉴 받기/);
   assert.doesNotMatch(game, /만들고 싶은 메뉴를 골라 보세요/);
   assert.match(scores, /remaining_budget DESC/);
 });
