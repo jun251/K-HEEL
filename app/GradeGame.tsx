@@ -199,10 +199,13 @@ function RationalConsumerGame({
   onFinish: (outcome: GameOutcome) => void;
   disabled: boolean;
 }) {
-  const [step, setStep] = useState<"intro" | "menu" | "shop" | "result">("intro");
+  const [step, setStep] = useState<"intro" | "shop" | "result">("intro");
   const [menuId, setMenuId] = useState<string | null>(null);
   const [selections, setSelections] = useState<Record<string, number>>({});
+  const [ingredientIndex, setIngredientIndex] = useState(0);
+  const [playedMenuIds, setPlayedMenuIds] = useState<string[]>([]);
   const selectedMenu = menus.find((menu) => menu.id === menuId) ?? null;
+  const currentIngredient = selectedMenu?.ingredients[ingredientIndex] ?? null;
 
   const summary = useMemo(() => {
     if (!selectedMenu) return { spent: 0, remaining: STARTING_BUDGET, ingredientScore: 0, bonus: 15, finalScore: 15, award: awardLabels.value };
@@ -235,13 +238,30 @@ function RationalConsumerGame({
     };
   }, [selectedMenu, selections]);
 
-  const selectedCount = Object.keys(selections).length;
   const overBudget = summary.remaining < 0;
 
-  const chooseMenu = (id: string) => {
-    setMenuId(id);
+  const startRandomMenu = (completedMenuIds: string[]) => {
+    const unplayedMenus = menus.filter((menu) => !completedMenuIds.includes(menu.id));
+    const candidates = unplayedMenus.length > 0 ? unplayedMenus : menus;
+    const randomMenu = candidates[Math.floor(Math.random() * candidates.length)];
+    setPlayedMenuIds(unplayedMenus.length > 0 ? completedMenuIds : []);
+    setMenuId(randomMenu.id);
     setSelections({});
+    setIngredientIndex(0);
     setStep("shop");
+  };
+
+  const selectIngredient = (choiceIndex: number) => {
+    if (!selectedMenu || !currentIngredient) return;
+    const choice = currentIngredient.choices[choiceIndex];
+    if (summary.spent + choice.price > STARTING_BUDGET) return;
+    setSelections((current) => ({ ...current, [currentIngredient.name]: choiceIndex }));
+    if (ingredientIndex < selectedMenu.ingredients.length - 1) {
+      setIngredientIndex((current) => current + 1);
+    } else {
+      setPlayedMenuIds((current) => current.includes(selectedMenu.id) ? current : [...current, selectedMenu.id]);
+      setStep("result");
+    }
   };
 
   if (step === "intro") {
@@ -261,29 +281,7 @@ function RationalConsumerGame({
           <b>합리적인 소비의 네 가지 기준</b>
           <div><span>가격</span><span>품질</span><span>건강</span><span>환경·지역 경제</span></div>
         </div>
-        <button className="primary-button consumer-start" onClick={() => setStep("menu")}>챌린지 시작하기 →</button>
-      </section>
-    );
-  }
-
-  if (step === "menu") {
-    return (
-      <section className="consumer-menu-step">
-        <div className="consumer-step-heading">
-          <span>STEP 1</span>
-          <h3>만들고 싶은 메뉴를 골라 보세요</h3>
-          <p>어떤 메뉴를 골라도 다섯 가지 재료를 선택하게 됩니다.</p>
-        </div>
-        <div className="consumer-menu-grid">
-          {menus.map((menu, index) => (
-            <button key={menu.id} onClick={() => chooseMenu(menu.id)}>
-              <i>{menu.icon}</i>
-              <small>MENU 0{index + 1}</small>
-              <strong>{menu.name}</strong>
-              <span>{menu.description}</span>
-            </button>
-          ))}
-        </div>
+        <button className="primary-button consumer-start" onClick={() => startRandomMenu([])}>랜덤 메뉴 받기 →</button>
       </section>
     );
   }
@@ -307,9 +305,10 @@ function RationalConsumerGame({
           <span>남은 금액 <b>{summary.remaining.toLocaleString()}원</b></span>
           <span>나의 특별상 <b>{summary.award}</b></span>
         </div>
+        <p className="consumer-round-progress">이번 순환에서 {playedMenuIds.length} / {menus.length}개 메뉴 완료</p>
         <p className="consumer-lesson">가격이 비싸거나 싸다는 이유만으로 고르지 않고, 품질·건강·환경·지역 경제를 함께 살피는 것이 합리적인 소비예요.</p>
         <div className="consumer-result-actions">
-          <button type="button" onClick={() => { setSelections({}); setStep("menu"); }}>다른 메뉴 도전하기</button>
+          <button type="button" onClick={() => startRandomMenu(playedMenuIds)}>안 한 메뉴 랜덤 도전</button>
           <button
             className="primary-button"
             disabled={disabled}
@@ -327,9 +326,9 @@ function RationalConsumerGame({
   return (
     <section className="consumer-shop">
       <div className="consumer-shop-top">
-        <button type="button" onClick={() => setStep("menu")}>← 메뉴 바꾸기</button>
-        <div><span>STEP 2</span><h3>{selectedMenu.name} 재료 고르기</h3></div>
-        <strong>{selectedCount} / {selectedMenu.ingredients.length}</strong>
+        <span className="random-menu-badge">랜덤 메뉴</span>
+        <div><span>재료 {ingredientIndex + 1}</span><h3>{selectedMenu.name}</h3></div>
+        <strong>{ingredientIndex + 1} / {selectedMenu.ingredients.length}</strong>
       </div>
 
       <div className={`consumer-budget ${overBudget ? "over" : ""}`}>
@@ -339,39 +338,42 @@ function RationalConsumerGame({
         <div><small>현재 예상 점수</small><strong>{summary.finalScore}점</strong></div>
       </div>
 
-      <div className="ingredient-list">
-        {selectedMenu.ingredients.map((ingredient, ingredientIndex) => (
-          <article className="ingredient-row" key={ingredient.name}>
-            <div className="ingredient-name"><span>{ingredientIndex + 1}</span><strong>{ingredient.name}</strong></div>
-            <div className="ingredient-options">
-              {ingredient.choices.map((choice, choiceIndex) => {
-                const selected = selections[ingredient.name] === choiceIndex;
-                return (
-                  <button
-                    type="button"
-                    className={selected ? "selected" : ""}
-                    key={choice.name}
-                    onClick={() => setSelections((current) => ({ ...current, [ingredient.name]: choiceIndex }))}
-                  >
-                    <span>{selected ? "✓" : "+"}</span>
-                    <div><strong>{choice.name}</strong><small>{choice.description}</small></div>
-                    <div><b>{choice.price.toLocaleString()}원</b><em>{choice.score}점</em></div>
-                  </button>
-                );
-              })}
-            </div>
-          </article>
+      <div className="ingredient-progress" aria-label="재료 선택 진행 상황">
+        {selectedMenu.ingredients.map((ingredient, index) => (
+          <span key={ingredient.name} className={index < ingredientIndex ? "done" : index === ingredientIndex ? "active" : ""}>
+            <b>{index < ingredientIndex ? "✓" : index + 1}</b>{ingredient.name}
+          </span>
         ))}
       </div>
 
-      {overBudget && <p className="consumer-budget-warning">예산을 {Math.abs(summary.remaining).toLocaleString()}원 초과했어요. 다른 재료를 선택해 보세요.</p>}
-      <button
-        className="primary-button consumer-finish"
-        disabled={selectedCount !== selectedMenu.ingredients.length || overBudget}
-        onClick={() => setStep("result")}
-      >
-        점수 계산하기 →
-      </button>
+      {currentIngredient && (
+        <article className="single-ingredient-card">
+          <div className="single-ingredient-heading">
+            <span>{ingredientIndex + 1}</span>
+            <div><small>둘 중 하나를 선택하세요</small><h4>{currentIngredient.name}</h4></div>
+          </div>
+          <div className="ingredient-options single-ingredient-options">
+            {currentIngredient.choices.map((choice, choiceIndex) => {
+              const exceedsBudget = summary.spent + choice.price > STARTING_BUDGET;
+              return (
+                <button
+                  type="button"
+                  disabled={exceedsBudget}
+                  key={choice.name}
+                  onClick={() => selectIngredient(choiceIndex)}
+                  aria-label={`${choice.name}, ${choice.price.toLocaleString()}원, ${choice.score}점${exceedsBudget ? ", 예산 초과" : ""}`}
+                >
+                  <span>선택</span>
+                  <div><strong>{choice.name}</strong><small>{choice.description}</small></div>
+                  <div><b>{choice.price.toLocaleString()}원</b><em>{choice.score}점</em></div>
+                  {exceedsBudget && <small className="option-budget-warning">예산 초과</small>}
+                </button>
+              );
+            })}
+          </div>
+          <p>선택하면 자동으로 다음 재료로 넘어갑니다.</p>
+        </article>
+      )}
     </section>
   );
 }
