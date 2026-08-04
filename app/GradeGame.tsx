@@ -170,6 +170,57 @@ const menus: Menu[] = [
   },
 ];
 
+const menuImages: Record<string, string> = {
+  doenjang: "/game-images/menus/doenjang-stew.jpg",
+  "kimchi-rice": "/game-images/menus/kimchi-rice.avif",
+  "vegetable-curry": "/game-images/menus/vegetable-curry.jpg",
+  "kimchi-pancake": "/game-images/menus/kimchi-pancake.jpg",
+  "fruit-yogurt": "/game-images/menus/fruit-yogurt.jpg",
+};
+
+const choiceImages: Record<string, string> = {
+  "일반 된장": "/game-images/choices/doenjang.jpg",
+  재래된장: "/game-images/choices/traditional-doenjang.jpg",
+  "수입 콩 두부": "/game-images/choices/tofu-imported.jpg",
+  "국내산 콩 두부": "/game-images/choices/tofu-domestic.jpg",
+  "일반 애호박": "/game-images/choices/zucchini.jpg",
+  "친환경 애호박": "/game-images/choices/zucchini-eco.jpg",
+  "일반 양파": "/game-images/choices/onion.jpg",
+  "지역 농가 양파": "/game-images/choices/onion-eco.jpg",
+  "못난이 당근": "/game-images/choices/carrot.jpg",
+  "프리미엄 당근": "/game-images/choices/carrot-eco.jpg",
+  "일반 쌀": "/game-images/choices/rice.jpg",
+  "친환경 쌀": "/game-images/choices/rice-eco.jpg",
+  "수입 김치": "/game-images/choices/kimchi-imported.jpg",
+  "국내산 김치": "/game-images/choices/kimchi-domestic.jpg",
+  "일반 달걀": "/game-images/choices/egg.jpg",
+  "동물복지 달걀": "/game-images/choices/egg-welfare.jpg",
+  "일반 식용유": "/game-images/choices/oil.jpg",
+  올리브유: "/game-images/choices/olive-oil.jpg",
+  "일반 햄": "/game-images/choices/ham.jpg",
+  "무첨가 햄": "/game-images/choices/ham-additive-free.jpg",
+  "일반 카레": "/game-images/choices/curry.jpg",
+  "저염 카레": "/game-images/choices/curry-low-salt.jpg",
+  "일반 감자": "/game-images/choices/potato.jpg",
+  "못난이 감자": "/game-images/choices/potato-imperfect.jpg",
+  "일반 당근": "/game-images/choices/carrot.jpg",
+  "친환경 당근": "/game-images/choices/carrot-eco.jpg",
+  "일반 밀가루": "/game-images/choices/flour.jpg",
+  우리밀: "/game-images/choices/flour-organic.jpg",
+  "일반 부추": "/game-images/choices/chives.jpg",
+  "친환경 부추": "/game-images/choices/chives-organic.jpg",
+  "플레인 요거트": "/game-images/choices/yogurt.jpg",
+  "유기농 요거트": "/game-images/choices/yogurt-organic.jpg",
+  "수입 바나나": "/game-images/choices/banana.jpg",
+  "친환경 바나나": "/game-images/choices/banana-eco.jpg",
+  "일반 사과": "/game-images/choices/apple.jpg",
+  "못난이 사과": "/game-images/choices/apple-imperfect.jpg",
+  "일반 딸기": "/game-images/choices/strawberry.jpg",
+  "지역 농가 딸기": "/game-images/choices/strawberry-eco.jpg",
+  "일반 꿀": "/game-images/choices/honey.jpg",
+  "천연 벌꿀": "/game-images/choices/honey-natural.jpg",
+};
+
 const awardLabels: Record<ConsumerValue, string> = {
   value: "최고의 가성비상",
   health: "건강 소비상",
@@ -314,7 +365,10 @@ function RationalConsumerGame({
     <section className="consumer-shop">
       <div className="consumer-shop-top">
         <span className="random-menu-badge">랜덤 메뉴</span>
-        <div><span>합리적 소비왕 챌린지 · 재료 {ingredientIndex + 1}</span><h3>{selectedMenu.name}</h3></div>
+        <div className="consumer-menu-identity">
+          <img src={menuImages[selectedMenu.id]} alt={`${selectedMenu.name} 완성 사진`} />
+          <div><span>합리적 소비왕 챌린지 · 재료 {ingredientIndex + 1}</span><h3>{selectedMenu.name}</h3></div>
+        </div>
         <strong>{ingredientIndex + 1} / {selectedMenu.ingredients.length}</strong>
       </div>
 
@@ -353,9 +407,10 @@ function RationalConsumerGame({
                   onClick={() => selectIngredient(choiceIndex)}
                   aria-label={`${choice.name}, ${choice.price.toLocaleString()}원, ${choice.score}점${exceedsBudget ? ", 예산 초과" : ""}`}
                 >
-                  <span>선택</span>
-                  <div><strong>{choice.name}</strong><small>{choice.description}</small></div>
-                  <div><b>{choice.price.toLocaleString()}원</b><em>{choice.score}점</em></div>
+                  <img className="choice-card-image" src={choiceImages[choice.name]} alt={choice.name} />
+                  <div className="choice-card-copy"><strong>{choice.name}</strong><small>{choice.description}</small></div>
+                  <div className="choice-card-meta"><b>{choice.price.toLocaleString()}원</b><em>{choice.score}점</em></div>
+                  <span className="choice-card-action">선택</span>
                   {exceedsBudget && <small className="option-budget-warning">예산 초과</small>}
                 </button>
               );
