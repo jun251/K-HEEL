@@ -247,6 +247,23 @@ export default function TeacherDashboard() {
               </div>
             </div>
 
+            {lessonControl.active && (
+              <div className="teacher-lesson-preview" data-testid="teacher-lesson-preview">
+                <div className="teacher-lesson-preview-bar">
+                  <span><i /> 학생 화면과 같은 페이지</span>
+                  <strong>{lessonControl.gradeBand.replace("-", "·")}학년 · {lessonControl.page}쪽</strong>
+                </div>
+                <div className="teacher-lesson-preview-stage">
+                  <img
+                    src={`/lesson-slides/grade-${lessonControl.gradeBand}/slide-${lessonControl.sourceSlide}.png`}
+                    alt={`${lessonControl.gradeBand.replace("-", "·")}학년 교육자료 ${lessonControl.page}페이지`}
+                  />
+                  {lessonControl.gradeBand === "1-2" && lessonControl.sourceSlide === 4 && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
+                  {lessonControl.gradeBand === "1-2" && [17, 18, 19, 20].includes(lessonControl.sourceSlide) && <span className="lesson-answer-mask ox" aria-hidden="true" />}
+                </div>
+              </div>
+            )}
+
             <div className="teacher-lesson-status">
               <article><span>대상 학생</span><strong>{lessonStudents.length}<small>명</small></strong></article>
               <article><span>현재 접속</span><strong>{lessonStudents.filter((student) => student.online).length}<small>명</small></strong></article>
