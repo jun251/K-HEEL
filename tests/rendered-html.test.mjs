@@ -152,7 +152,7 @@ test("education materials open as responsive PPT-based web lessons", async () =>
 });
 
 test("teacher-led lessons synchronize student pages and report quiz participation", async () => {
-  const [runtime, teacherLesson, classroomStatus, lessonResponse, teacherStatus, teacherPage, gamePage, studentLesson] = await Promise.all([
+  const [runtime, teacherLesson, classroomStatus, lessonResponse, teacherStatus, teacherPage, gamePage, studentLesson, netlifyMigration] = await Promise.all([
     readFile(new URL("../db/runtime.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/teacher/lesson/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/classroom/status/route.ts", import.meta.url), "utf8"),
@@ -161,10 +161,13 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
     readFile(new URL("../app/teacher/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/game/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/game/StudentLesson.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../netlify/database/migrations/20260805073000_add-lesson-sync/migration.sql", import.meta.url), "utf8"),
   ]);
 
   assert.match(runtime, /CREATE TABLE IF NOT EXISTS lesson_controls/);
   assert.match(runtime, /CREATE TABLE IF NOT EXISTS lesson_responses/);
+  assert.match(netlifyMigration, /CREATE TABLE IF NOT EXISTS lesson_controls/);
+  assert.match(netlifyMigration, /CREATE TABLE IF NOT EXISTS lesson_responses/);
   assert.match(teacherLesson, /INSERT INTO lesson_controls/);
   assert.match(teacherLesson, /sourceSlide/);
   assert.match(classroomStatus, /lessonActive/);
