@@ -171,6 +171,7 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
   assert.match(teacherPage, /큰 화면 열기/);
   assert.match(teacherPage, /data-testid="teacher-lesson-preview"/);
   assert.match(teacherPage, /학생 화면과 같은 페이지/);
+  assert.match(teacherPage, /window\.open\(presentationUrl, "kheel-lesson-presenter"\)/);
   assert.match(gamePage, /<StudentLesson/);
   assert.match(studentLesson, /선생님이 페이지를 넘기면 이 화면도 자동으로 넘어갑니다/);
   assert.match(studentLesson, /\/api\/classroom\/lesson-response/);

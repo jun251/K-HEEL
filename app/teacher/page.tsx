@@ -140,6 +140,15 @@ export default function TeacherDashboard() {
     }
   };
 
+  const startLesson = () => {
+    const presentationUrl = `/materials/lesson/${lessonControl.gradeBand}?present=1&page=1`;
+    const presentationWindow = window.open(presentationUrl, "kheel-lesson-presenter");
+    if (!presentationWindow) {
+      setMessage("새 창이 차단되었습니다. 브라우저의 팝업을 허용하거나 '큰 화면 열기'를 눌러 주세요.");
+    }
+    void changeLesson({ active: true, page: 1 });
+  };
+
   const completed = students.filter((student) => student.status === "completed").length;
   const progressing = students.filter((student) => student.status === "in_progress").length;
   const online = students.filter((student) => student.online).length;
@@ -240,7 +249,7 @@ export default function TeacherDashboard() {
                     <button className="stop" disabled={lessonLoading} onClick={() => void changeLesson({ active: false })}>자료 수업 종료</button>
                   </>
                 ) : (
-                  <button className="start" disabled={lessonLoading} onClick={() => void changeLesson({ active: true, page: 1 })}>
+                  <button className="start" disabled={lessonLoading} onClick={startLesson}>
                     {lessonLoading ? "연결 중…" : "자료 수업 시작"}
                   </button>
                 )}
