@@ -142,4 +142,6 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(lessonViewer, /19: \{ answer: "O"/);
   assert.match(lessonViewer, /20: \{ answer: "X"/);
   assert.match(lessonViewer, /땡! 다시 골라보세요/);
+  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(styles, /lesson-answer-mask\.rabbit \{ bottom:3%; height:25%/);
 });
