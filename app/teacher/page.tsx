@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getLessonSourceSlide, lessons, type LessonGrade } from "../materials/lesson/lesson-data";
 
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
@@ -44,6 +44,7 @@ export default function TeacherDashboard() {
     gradeBand: "1-2", page: 1, sourceSlide: 1, active: false, phase: "waiting",
   });
   const [lessonLoading, setLessonLoading] = useState(false);
+  const presentationWindow = useRef<Window | null>(null);
 
   const loadStatus = useCallback(async () => {
     try {
@@ -102,7 +103,7 @@ export default function TeacherDashboard() {
     }
   };
 
-  const changeLesson = async (next: Partial<LessonControl> & { completed?: boolean }) => {
+  const changeLesson = useCallback(async (next: Partial<LessonControl> & { completed?: boolean }) => {
     const gradeBand = next.gradeBand ?? lessonControl.gradeBand;
     const page = Math.min(lessons[gradeBand].slideCount, Math.max(1, next.page ?? lessonControl.page));
     const active = next.active ?? lessonControl.active;
@@ -117,6 +118,11 @@ export default function TeacherDashboard() {
       const data = (await response.json()) as LessonControl & { error?: string };
       if (!response.ok) throw new Error(data.error || "교육자료 화면을 제어하지 못했습니다.");
       setLessonControl(data);
+      presentationWindow.current?.postMessage({
+        type: "kheel-lesson-sync",
+        gradeBand: data.gradeBand,
+        page: data.page,
+      }, window.location.origin);
       setMessage(active
         ? `${gradeBand.replace("-", "·")}학년 학생 화면을 ${page}쪽으로 맞췄습니다.`
         : "학생 화면의 교육자료 수업을 종료했습니다.");
@@ -126,12 +132,25 @@ export default function TeacherDashboard() {
     } finally {
       setLessonLoading(false);
     }
-  };
+  }, [lessonControl, loadStatus]);
+
+  useEffect(() => {
+    function handlePresentationMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data as { type?: string; gradeBand?: string; page?: number };
+      if (data.type !== "kheel-lesson-page" || data.gradeBand !== lessonControl.gradeBand || !Number.isFinite(data.page)) return;
+      void changeLesson({ active: true, phase: "active", page: Number(data.page) });
+    }
+
+    window.addEventListener("message", handlePresentationMessage);
+    return () => window.removeEventListener("message", handlePresentationMessage);
+  }, [changeLesson, lessonControl.gradeBand]);
 
   const startLesson = () => {
     const presentationUrl = `/materials/lesson/${lessonControl.gradeBand}?present=1&page=1`;
-    const presentationWindow = window.open(presentationUrl, "kheel-lesson-presenter");
-    if (!presentationWindow) {
+    const openedWindow = window.open(presentationUrl, "kheel-lesson-presenter");
+    presentationWindow.current = openedWindow;
+    if (!openedWindow) {
       setMessage("새 창이 차단되었습니다. 브라우저의 팝업을 허용하거나 '큰 화면 열기'를 눌러 주세요.");
     }
     void changeLesson({ active: true, phase: "active", page: 1 });
@@ -213,11 +232,12 @@ export default function TeacherDashboard() {
                 {lessonControl.active ? (
                   <>
                     <button disabled={lessonLoading || lessonControl.page === 1} onClick={() => void changeLesson({ page: lessonControl.page - 1 })}>← 이전</button>
-                    <a
-                      href={`/materials/lesson/${lessonControl.gradeBand}?present=1&page=${lessonControl.page}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >큰 화면 열기</a>
+                    <button onClick={() => {
+                      presentationWindow.current = window.open(
+                        `/materials/lesson/${lessonControl.gradeBand}?present=1&page=${lessonControl.page}`,
+                        "kheel-lesson-presenter",
+                      );
+                    }}>큰 화면 열기</button>
                     <button disabled={lessonLoading || lessonControl.page === lessons[lessonControl.gradeBand].slideCount} onClick={() => void changeLesson({ page: lessonControl.page + 1 })}>다음 →</button>
                     <button className="stop" disabled={lessonLoading} onClick={() => void changeLesson({ active: false, completed: true, phase: "completed" })}>교육 종료 · 게임 시작</button>
                   </>

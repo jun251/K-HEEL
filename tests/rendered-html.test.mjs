@@ -142,6 +142,11 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(lessonViewer, /19: \{ answer: "O"/);
   assert.match(lessonViewer, /20: \{ answer: "X"/);
   assert.match(lessonViewer, /땡! 다시 골라보세요/);
+  assert.match(lessonViewer, /kheel-lesson-sync/);
+  assert.match(lessonViewer, /선생님·학생 화면과 연결됨/);
+  assert.match(lessonViewer, /선생님 발표 화면/);
+  assert.match(lessonViewer, /lesson-presentation-mode/);
+  assert.doesNotMatch(lessonViewer, /선생님 페이지에서 다시 로그인해 주세요/);
   const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(styles, /lesson-answer-mask\.rabbit \{ bottom:3%; height:25%/);
 });
@@ -172,6 +177,7 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
   assert.match(teacherPage, /data-testid="teacher-lesson-preview"/);
   assert.match(teacherPage, /학생 화면과 같은 페이지/);
   assert.match(teacherPage, /window\.open\(presentationUrl, "kheel-lesson-presenter"\)/);
+  assert.match(teacherPage, /kheel-lesson-page/);
   assert.match(gamePage, /<StudentLesson/);
   assert.match(gamePage, /lessonState\.phase !== "completed"/);
   assert.match(gamePage, /교육자료를 준비하고 있어요/);

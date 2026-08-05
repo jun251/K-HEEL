@@ -24,18 +24,13 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   const [presentationStatus, setPresentationStatus] = useState("");
   const stageRef = useRef<HTMLElement>(null);
 
-  const syncPresentation = useCallback(async (page: number) => {
-    try {
-      const response = await fetch("/api/teacher/lesson", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gradeBand: lesson.grade, page, active: true }),
-      });
-      if (!response.ok) throw new Error();
-      setPresentationStatus("학생 화면 동기화 중");
-    } catch {
-      setPresentationStatus("선생님 페이지에서 다시 로그인해 주세요");
+  const syncPresentation = useCallback((page: number) => {
+    if (!window.opener || window.opener.closed) {
+      setPresentationStatus("선생님 제어 화면에서 '경제교육 시작'을 눌러 열어 주세요");
+      return;
     }
+    window.opener.postMessage({ type: "kheel-lesson-page", gradeBand: lesson.grade, page }, window.location.origin);
+    setPresentationStatus("선생님·학생 화면과 연결됨");
   }, [lesson.grade]);
 
   const goTo = useCallback(
@@ -43,7 +38,7 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
       setSlide(Math.min(lesson.slideCount, Math.max(1, next)));
       setFeedback(null);
       const bounded = Math.min(lesson.slideCount, Math.max(1, next));
-      if (presentationMode) void syncPresentation(bounded);
+      if (presentationMode) syncPresentation(bounded);
     },
     [lesson.slideCount, presentationMode, syncPresentation],
   );
@@ -54,23 +49,21 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
     const requestedPage = Math.min(lesson.slideCount, Math.max(1, Number(params.get("page")) || 1));
     setSlide(requestedPage);
     setPresentationMode(true);
-    void syncPresentation(requestedPage);
+    syncPresentation(requestedPage);
   }, [lesson.slideCount, syncPresentation]);
 
   useEffect(() => {
     if (!presentationMode) return;
-    let disposed = false;
-    const loadTeacherLesson = async () => {
-      const response = await fetch("/api/teacher/status", { cache: "no-store" });
-      if (!response.ok) return;
-      const data = (await response.json()) as { lesson?: { active: boolean; gradeBand: string; page: number } };
-      if (!disposed && data.lesson?.active && data.lesson.gradeBand === lesson.grade) {
-        setSlide(data.lesson.page);
-      }
-    };
-    const timer = window.setInterval(() => void loadTeacherLesson(), 2000);
-    return () => { disposed = true; window.clearInterval(timer); };
-  }, [lesson.grade, presentationMode]);
+    function handleTeacherMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data as { type?: string; gradeBand?: string; page?: number };
+      if (data.type !== "kheel-lesson-sync" || data.gradeBand !== lesson.grade || !Number.isFinite(data.page)) return;
+      setSlide(Math.min(lesson.slideCount, Math.max(1, Number(data.page))));
+      setPresentationStatus("선생님·학생 화면과 연결됨");
+    }
+    window.addEventListener("message", handleTeacherMessage);
+    return () => window.removeEventListener("message", handleTeacherMessage);
+  }, [lesson.grade, lesson.slideCount, presentationMode]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -121,31 +114,41 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   }
 
   return (
-    <main className={`lesson-page lesson-${lesson.accent}`}>
-      <header className="lesson-header">
-        <a className="lesson-back" href="/materials" aria-label="교육자료로 돌아가기">
-          <span aria-hidden="true">←</span> 교육자료
-        </a>
-        <div className="lesson-heading">
-          <span>{lesson.label} 웹 학습</span>
-          <strong>{lesson.title}</strong>
-        </div>
-        <button className="lesson-overview-button" type="button" onClick={() => setOverviewOpen(true)}>
-          전체 페이지
-        </button>
-      </header>
+    <main className={`lesson-page lesson-${lesson.accent} ${presentationMode ? "lesson-presentation-mode" : ""}`}>
+      {presentationMode ? (
+        <header className="lesson-presentation-header">
+          <span>선생님 발표 화면</span>
+          <strong>{lesson.label} 경제교육</strong>
+          <b>{slide} / {lesson.slideCount}</b>
+        </header>
+      ) : (
+        <>
+          <header className="lesson-header">
+            <a className="lesson-back" href="/materials" aria-label="교육자료로 돌아가기">
+              <span aria-hidden="true">←</span> 교육자료
+            </a>
+            <div className="lesson-heading">
+              <span>{lesson.label} 웹 학습</span>
+              <strong>{lesson.title}</strong>
+            </div>
+            <button className="lesson-overview-button" type="button" onClick={() => setOverviewOpen(true)}>
+              전체 페이지
+            </button>
+          </header>
 
-      <section className="lesson-intro" aria-labelledby="lesson-title">
-        <div>
-          <p className="eyebrow">RESPONSIVE LESSON</p>
-          <h1 id="lesson-title">{lesson.title}</h1>
-          <p>{lesson.description}</p>
-        </div>
-        <div className="lesson-count" aria-label={`전체 ${lesson.slideCount}페이지`}>
-          <strong>{lesson.slideCount}</strong>
-          <span>pages</span>
-        </div>
-      </section>
+          <section className="lesson-intro" aria-labelledby="lesson-title">
+            <div>
+              <p className="eyebrow">RESPONSIVE LESSON</p>
+              <h1 id="lesson-title">{lesson.title}</h1>
+              <p>{lesson.description}</p>
+            </div>
+            <div className="lesson-count" aria-label={`전체 ${lesson.slideCount}페이지`}>
+              <strong>{lesson.slideCount}</strong>
+              <span>pages</span>
+            </div>
+          </section>
+        </>
+      )}
 
       {presentationMode && <div className="lesson-sync-banner"><i /> {presentationStatus || "학생 화면 연결 중"}</div>}
 

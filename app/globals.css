@@ -282,6 +282,9 @@ footer { padding:52px clamp(20px,7vw,110px); background:var(--ink); color:white;
 /* PPT-based responsive lessons */
 .lesson-page { min-height:100vh; background:#f6f4eb; color:var(--ink); }
 .lesson-header { min-height:76px; padding:13px clamp(18px,5vw,72px); border-bottom:1px solid rgba(23,51,43,.18); background:rgba(255,255,255,.9); display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:18px; position:sticky; top:0; z-index:20; backdrop-filter:blur(12px); }
+.lesson-presentation-header { min-height:66px; padding:12px clamp(18px,4vw,60px); display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:18px; border-bottom:1px solid rgba(23,51,43,.18); background:var(--ink); color:white; position:sticky; top:0; z-index:20; }
+.lesson-presentation-header span { color:#b9d8cb; font-size:13px; font-weight:900; }.lesson-presentation-header strong { font-size:18px; }.lesson-presentation-header b { justify-self:end; color:var(--yellow); }
+.lesson-presentation-mode .lesson-sync-banner { margin:18px auto; }.lesson-presentation-mode .lesson-stage-wrap { padding-top:0; }
 .lesson-back,.lesson-overview-button { color:var(--ink); font-size:13px; font-weight:900; text-decoration:none; }
 .lesson-back { display:flex; align-items:center; gap:8px; }
 .lesson-back span { width:32px; height:32px; border:1px solid var(--ink); border-radius:50%; display:grid; place-items:center; }
