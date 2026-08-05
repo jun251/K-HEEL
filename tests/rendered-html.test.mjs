@@ -29,7 +29,7 @@ test("teacher dashboard controls every student screen and shows presence", async
     readFile(new URL("../app/api/classroom/status/route.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(teacherPage, /게임 시작·재개/);
+  assert.match(teacherPage, /게임 재개/);
   assert.match(teacherPage, /일시정지/);
   assert.match(teacherPage, /현재 접속/);
   assert.match(controlRoute, /classroom_controls/);
@@ -166,7 +166,7 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
   assert.match(classroomStatus, /sourceSlide/);
   assert.match(lessonResponse, /ON CONFLICT\(player_id, source_slide\)/);
   assert.match(teacherStatus, /lessonResponse/);
-  assert.match(teacherPage, /교육자료 함께 보기/);
+  assert.match(teacherPage, /경제교육부터 게임까지 한 번에 진행/);
   assert.match(teacherPage, /퀴즈 참여 현황/);
   assert.match(teacherPage, /큰 화면 열기/);
   assert.match(teacherPage, /data-testid="teacher-lesson-preview"/);
@@ -179,6 +179,9 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
   assert.match(classroomStatus, /lessonState === 2/);
   assert.match(teacherLesson, /completed \? 2 : 0/);
   assert.match(teacherPage, /교육 종료 · 게임 시작/);
+  assert.match(teacherPage, /경제교육부터 게임까지 한 번에 진행/);
+  assert.match(teacherPage, /teacher-flow-steps/);
+  assert.doesNotMatch(teacherPage, /controls\.map/);
   assert.match(studentLesson, /선생님이 페이지를 넘기면 이 화면도 자동으로 넘어갑니다/);
   assert.match(studentLesson, /\/api\/classroom\/lesson-response/);
 });

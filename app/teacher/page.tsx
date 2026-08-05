@@ -32,20 +32,6 @@ const statusLabels = {
   completed: "미션 완료",
 };
 
-const controlInfo: Record<ClassroomState, { label: string; title: string; copy: string }> = {
-  waiting: { label: "대기 중", title: "학생 화면이 대기 상태예요", copy: "학생 이름과 학년을 확인한 뒤 게임 시작을 눌러 주세요." },
-  active: { label: "수업 진행 중", title: "학생들이 게임을 진행하고 있어요", copy: "필요할 때 전체 화면을 잠시 멈추거나 수업을 종료할 수 있어요." },
-  paused: { label: "일시정지", title: "모든 학생 화면을 멈췄어요", copy: "학생들의 선택은 유지됩니다. 준비되면 다시 시작해 주세요." },
-  ended: { label: "수업 종료", title: "학생 화면에 종료 안내가 표시돼요", copy: "새 활동을 시작하려면 대기 화면 또는 게임 시작을 선택해 주세요." },
-};
-
-const controls: Array<{ state: ClassroomState; label: string }> = [
-  { state: "waiting", label: "대기 화면" },
-  { state: "active", label: "게임 시작·재개" },
-  { state: "paused", label: "일시정지" },
-  { state: "ended", label: "수업 종료" },
-];
-
 export default function TeacherDashboard() {
   const [roomCode, setRoomCode] = useState("");
   const [students, setStudents] = useState<Student[]>([]);
@@ -106,7 +92,8 @@ export default function TeacherDashboard() {
       const data = (await response.json()) as { state?: ClassroomState; error?: string };
       if (!response.ok || !data.state) throw new Error(data.error || "학생 화면을 제어하지 못했습니다.");
       setControlState(data.state);
-      setMessage(`${controlInfo[data.state].label} 상태로 변경했습니다.`);
+      const stateLabel = { waiting: "대기", active: "게임 진행", paused: "게임 일시정지", ended: "수업 종료" }[data.state];
+      setMessage(`${stateLabel} 상태로 변경했습니다.`);
       await loadStatus();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "학생 화면을 제어하지 못했습니다.");
@@ -187,39 +174,24 @@ export default function TeacherDashboard() {
             <div className="live-indicator"><i /> LIVE<small>{updatedAt ? new Date(updatedAt).toLocaleTimeString("ko-KR") : "연결 중"}</small></div>
           </section>
 
-          <section className={`classroom-control-panel ${controlState}`}>
-            <div className="control-summary">
-              <span className="control-state">{controlInfo[controlState].label}</span>
-              <h2>{controlInfo[controlState].title}</h2>
-              <p>{controlInfo[controlState].copy}</p>
-            </div>
-            <div className="control-actions" aria-label="학생 화면 제어">
-              {controls.map((control) => (
-                <button
-                  key={control.state}
-                  className={controlState === control.state ? "active" : ""}
-                  disabled={controlLoading}
-                  aria-pressed={controlState === control.state}
-                  onClick={() => void changeControl(control.state)}
-                >
-                  {control.label}
-                </button>
-              ))}
-            </div>
-          </section>
-
           <section className={`teacher-lesson-panel ${lessonControl.active ? "active" : ""}`}>
+            <ol className="teacher-flow-steps" aria-label="수업 진행 단계">
+              <li className={lessonControl.phase === "completed" ? "done" : "active"}><b>1</b><span>경제교육</span></li>
+              <li className={lessonControl.phase === "completed" && controlState !== "ended" ? "active" : controlState === "ended" ? "done" : ""}><b>2</b><span>게임</span></li>
+              <li className={controlState === "ended" ? "active" : ""}><b>3</b><span>수업 종료</span></li>
+            </ol>
+
             <div className="teacher-lesson-heading">
               <div>
-                <span className="portal-badge">SYNCED LESSON</span>
-                <h2>교육자료 함께 보기</h2>
-                <p>선생님이 넘긴 페이지가 같은 학년 학생들의 모바일 화면에도 자동으로 표시됩니다.</p>
+                <span className="portal-badge">CLASS FLOW</span>
+                <h2>경제교육부터 게임까지 한 번에 진행</h2>
+                <p>교육자료를 먼저 함께 보고, 교육 종료 후 같은 화면에서 게임을 시작하고 제어합니다.</p>
               </div>
               <label>
                 진행할 학년
                 <select
                   value={lessonControl.gradeBand}
-                  disabled={lessonControl.active || lessonLoading}
+                  disabled={lessonControl.active || (lessonControl.phase === "completed" && controlState !== "ended") || lessonLoading}
                   onChange={(event) => {
                     const gradeBand = event.target.value as LessonGrade;
                     setLessonControl({ gradeBand, page: 1, sourceSlide: getLessonSourceSlide(gradeBand, 1), active: false, phase: "waiting" });
@@ -234,8 +206,8 @@ export default function TeacherDashboard() {
 
             <div className="teacher-lesson-controller">
               <div className="teacher-lesson-page">
-                <small>{lessonControl.active ? "학생 화면 동기화 중" : "수업을 시작해 주세요"}</small>
-                <strong>{lessonControl.page}<span> / {lessons[lessonControl.gradeBand].slideCount}쪽</span></strong>
+                <small>{lessonControl.active ? "학생 화면 동기화 중" : lessonControl.phase === "completed" ? (controlState === "ended" ? "전체 수업 종료" : "학생 게임 진행 단계") : "경제교육부터 시작해 주세요"}</small>
+                {lessonControl.phase === "completed" ? <strong>{controlState === "ended" ? "종료" : "게임"}</strong> : <strong>{lessonControl.page}<span> / {lessons[lessonControl.gradeBand].slideCount}쪽</span></strong>}
               </div>
               <div className="teacher-lesson-actions">
                 {lessonControl.active ? (
@@ -249,9 +221,19 @@ export default function TeacherDashboard() {
                     <button disabled={lessonLoading || lessonControl.page === lessons[lessonControl.gradeBand].slideCount} onClick={() => void changeLesson({ page: lessonControl.page + 1 })}>다음 →</button>
                     <button className="stop" disabled={lessonLoading} onClick={() => void changeLesson({ active: false, completed: true, phase: "completed" })}>교육 종료 · 게임 시작</button>
                   </>
+                ) : lessonControl.phase === "completed" ? (
+                  <>
+                    {controlState === "paused" ? (
+                      <button className="start" disabled={controlLoading} onClick={() => void changeControl("active")}>게임 재개</button>
+                    ) : controlState !== "ended" ? (
+                      <button disabled={controlLoading} onClick={() => void changeControl("paused")}>게임 일시정지</button>
+                    ) : null}
+                    {controlState !== "ended" && <button className="stop" disabled={controlLoading} onClick={() => void changeControl("ended")}>전체 수업 종료</button>}
+                    {controlState === "ended" && <button className="start" disabled={lessonLoading} onClick={startLesson}>새 경제교육 시작</button>}
+                  </>
                 ) : (
                   <button className="start" disabled={lessonLoading} onClick={startLesson}>
-                    {lessonLoading ? "연결 중…" : "자료 수업 시작"}
+                    {lessonLoading ? "연결 중…" : "경제교육 시작"}
                   </button>
                 )}
               </div>
