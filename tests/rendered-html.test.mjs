@@ -173,6 +173,12 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
   assert.match(teacherPage, /학생 화면과 같은 페이지/);
   assert.match(teacherPage, /window\.open\(presentationUrl, "kheel-lesson-presenter"\)/);
   assert.match(gamePage, /<StudentLesson/);
+  assert.match(gamePage, /lessonState\.phase !== "completed"/);
+  assert.match(gamePage, /교육자료를 준비하고 있어요/);
+  assert.match(classroomStatus, /phase: "waiting"/);
+  assert.match(classroomStatus, /lessonState === 2/);
+  assert.match(teacherLesson, /completed \? 2 : 0/);
+  assert.match(teacherPage, /교육 종료 · 게임 시작/);
   assert.match(studentLesson, /선생님이 페이지를 넘기면 이 화면도 자동으로 넘어갑니다/);
   assert.match(studentLesson, /\/api\/classroom\/lesson-response/);
 });

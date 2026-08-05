@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       SELECT grade_band AS gradeBand, source_slide AS sourceSlide, active
       FROM lesson_controls WHERE room_code = ? LIMIT 1
     `).bind(player.roomCode).first<{ gradeBand: string; sourceSlide: number; active: number | boolean }>();
-    if (!control || !control.active || control.gradeBand !== player.gradeBand || Number(control.sourceSlide) !== sourceSlide) {
+    if (!control || Number(control.active) !== 1 || control.gradeBand !== player.gradeBand || Number(control.sourceSlide) !== sourceSlide) {
       return Response.json({ error: "현재 진행 중인 문제가 아닙니다." }, { status: 409 });
     }
 

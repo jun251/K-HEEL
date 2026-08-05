@@ -8,7 +8,14 @@ type GradeBand = "1-2" | "3-4" | "5-6";
 type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand };
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
 type BlockingClassroomState = Extract<ClassroomState, "paused" | "ended">;
-type LessonState = { active: false } | { active: true; gradeBand: GradeBand; page: number; sourceSlide: number; updatedAt?: string };
+type LessonState = {
+  phase: "waiting" | "active" | "completed";
+  active: boolean;
+  gradeBand: GradeBand;
+  page: number;
+  sourceSlide: number;
+  updatedAt?: string;
+};
 
 function isBlockingClassroomState(state: ClassroomState): state is BlockingClassroomState {
   return state === "paused" || state === "ended";
@@ -25,8 +32,9 @@ export default function GameWindow() {
   const [status, setStatus] = useState("게임 정보를 불러오는 중이에요.");
   const [loading, setLoading] = useState(false);
   const [classroomState, setClassroomState] = useState<ClassroomState>("waiting");
-  const [lessonState, setLessonState] = useState<LessonState>({ active: false });
+  const [lessonState, setLessonState] = useState<LessonState | null>(null);
   const previousClassroomState = useRef<ClassroomState | null>(null);
+  const previousLessonPhase = useRef<LessonState["phase"] | null>(null);
   const completed = useRef(false);
 
   useEffect(() => {
@@ -66,11 +74,12 @@ export default function GameWindow() {
         if (disposed) return;
 
         setClassroomState(data.state);
-        setLessonState(data.lesson ?? { active: false });
+        setLessonState(data.lesson ?? null);
         const wasBlocked = previousClassroomState.current
           ? isBlockingClassroomState(previousClassroomState.current)
           : true;
-        if (!isBlockingClassroomState(data.state) && wasBlocked && !completed.current) {
+        const gameJustOpened = data.lesson?.phase === "completed" && previousLessonPhase.current !== "completed";
+        if (data.lesson?.phase === "completed" && !isBlockingClassroomState(data.state) && (wasBlocked || gameJustOpened) && !completed.current) {
           void fetch("/api/progress", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -82,6 +91,7 @@ export default function GameWindow() {
           });
         }
         previousClassroomState.current = data.state;
+        previousLessonPhase.current = data.lesson?.phase ?? null;
       } catch {
         if (!disposed) setStatus("선생님 화면과 연결을 확인하고 있어요.");
       }
@@ -129,7 +139,12 @@ export default function GameWindow() {
       <section className="game-shell game-window-shell">
         {player ? (
           <>
-            {lessonState.active && lessonState.gradeBand === player.gradeBand ? (
+            {!lessonState ? (
+              <div className="game-window-message" role="status">
+                <h2>교육자료를 준비하고 있어요</h2>
+                <p>잠시만 기다려 주세요.</p>
+              </div>
+            ) : lessonState.phase !== "completed" ? (
               <StudentLesson token={player.token} nickname={player.nickname} lesson={lessonState} />
             ) : (
               <>

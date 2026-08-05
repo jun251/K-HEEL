@@ -52,18 +52,32 @@ export async function GET(request: Request) {
       updatedAt: string;
     }>();
 
-    const lessonActive = Boolean(lesson?.active) && lesson?.gradeBand === player.gradeBand;
+    const lessonState = Number(lesson?.active ?? 0);
+    const sameGrade = lesson?.gradeBand === player.gradeBand;
+    const lessonActive = sameGrade && lessonState === 1;
+    const lessonPhase = lessonActive
+      ? "active"
+      : sameGrade && lessonState === 2
+        ? "completed"
+        : "waiting";
 
     return Response.json({
       state: control?.state ?? "waiting",
       updatedAt: control?.updatedAt ?? new Date().toISOString(),
-      lesson: lessonActive && lesson ? {
-        active: true,
-        gradeBand: lesson.gradeBand,
-        page: Number(lesson.page),
-        sourceSlide: Number(lesson.sourceSlide),
+      lesson: sameGrade && lesson ? {
+        phase: lessonPhase,
+        active: lessonPhase === "active",
+        gradeBand: player.gradeBand,
+        page: lessonPhase === "waiting" ? 1 : Number(lesson.page),
+        sourceSlide: lessonPhase === "waiting" ? 1 : Number(lesson.sourceSlide),
         updatedAt: lesson.updatedAt,
-      } : { active: false },
+      } : {
+        phase: "waiting",
+        active: false,
+        gradeBand: player.gradeBand,
+        page: 1,
+        sourceSlide: 1,
+      },
     });
   } catch (error) {
     return Response.json(

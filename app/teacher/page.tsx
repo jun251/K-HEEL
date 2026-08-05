@@ -22,6 +22,7 @@ type LessonControl = {
   page: number;
   sourceSlide: number;
   active: boolean;
+  phase: "waiting" | "active" | "completed";
   updatedAt?: string | null;
 };
 
@@ -54,7 +55,7 @@ export default function TeacherDashboard() {
   const [authorized, setAuthorized] = useState(true);
   const [controlLoading, setControlLoading] = useState(false);
   const [lessonControl, setLessonControl] = useState<LessonControl>({
-    gradeBand: "1-2", page: 1, sourceSlide: 1, active: false,
+    gradeBand: "1-2", page: 1, sourceSlide: 1, active: false, phase: "waiting",
   });
   const [lessonLoading, setLessonLoading] = useState(false);
 
@@ -114,7 +115,7 @@ export default function TeacherDashboard() {
     }
   };
 
-  const changeLesson = async (next: Partial<LessonControl>) => {
+  const changeLesson = async (next: Partial<LessonControl> & { completed?: boolean }) => {
     const gradeBand = next.gradeBand ?? lessonControl.gradeBand;
     const page = Math.min(lessons[gradeBand].slideCount, Math.max(1, next.page ?? lessonControl.page));
     const active = next.active ?? lessonControl.active;
@@ -124,7 +125,7 @@ export default function TeacherDashboard() {
       const response = await fetch("/api/teacher/lesson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gradeBand, page, active }),
+        body: JSON.stringify({ gradeBand, page, active, completed: next.completed === true }),
       });
       const data = (await response.json()) as LessonControl & { error?: string };
       if (!response.ok) throw new Error(data.error || "교육자료 화면을 제어하지 못했습니다.");
@@ -146,7 +147,7 @@ export default function TeacherDashboard() {
     if (!presentationWindow) {
       setMessage("새 창이 차단되었습니다. 브라우저의 팝업을 허용하거나 '큰 화면 열기'를 눌러 주세요.");
     }
-    void changeLesson({ active: true, page: 1 });
+    void changeLesson({ active: true, phase: "active", page: 1 });
   };
 
   const completed = students.filter((student) => student.status === "completed").length;
@@ -221,7 +222,7 @@ export default function TeacherDashboard() {
                   disabled={lessonControl.active || lessonLoading}
                   onChange={(event) => {
                     const gradeBand = event.target.value as LessonGrade;
-                    setLessonControl({ gradeBand, page: 1, sourceSlide: getLessonSourceSlide(gradeBand, 1), active: false });
+                    setLessonControl({ gradeBand, page: 1, sourceSlide: getLessonSourceSlide(gradeBand, 1), active: false, phase: "waiting" });
                   }}
                 >
                   <option value="1-2">1·2학년</option>
@@ -246,7 +247,7 @@ export default function TeacherDashboard() {
                       rel="noreferrer"
                     >큰 화면 열기</a>
                     <button disabled={lessonLoading || lessonControl.page === lessons[lessonControl.gradeBand].slideCount} onClick={() => void changeLesson({ page: lessonControl.page + 1 })}>다음 →</button>
-                    <button className="stop" disabled={lessonLoading} onClick={() => void changeLesson({ active: false })}>자료 수업 종료</button>
+                    <button className="stop" disabled={lessonLoading} onClick={() => void changeLesson({ active: false, completed: true, phase: "completed" })}>교육 종료 · 게임 시작</button>
                   </>
                 ) : (
                   <button className="start" disabled={lessonLoading} onClick={startLesson}>

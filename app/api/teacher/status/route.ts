@@ -66,11 +66,15 @@ export async function GET(request: Request) {
       score: number | null;
     }>();
 
-    const responseQuery = lesson?.active ? await db.prepare(`
+    const lessonState = Number(lesson?.active ?? 0);
+    const lessonActive = lessonState === 1;
+    const lessonPhase = lessonActive ? "active" : lessonState === 2 ? "completed" : "waiting";
+
+    const responseQuery = lessonActive ? await db.prepare(`
       SELECT player_id AS playerId, answer, is_correct AS isCorrect, updated_at AS updatedAt
       FROM lesson_responses
       WHERE room_code = ? AND grade_band = ? AND source_slide = ?
-    `).bind(roomCode, lesson.gradeBand, lesson.sourceSlide).all<{
+    `).bind(roomCode, lesson!.gradeBand, lesson!.sourceSlide).all<{
       playerId: number;
       answer: string;
       isCorrect: number | boolean;
@@ -89,9 +93,10 @@ export async function GET(request: Request) {
         gradeBand: lesson.gradeBand,
         page: Number(lesson.page),
         sourceSlide: Number(lesson.sourceSlide),
-        active: Boolean(lesson.active),
+        active: lessonActive,
+        phase: lessonPhase,
         updatedAt: lesson.updatedAt,
-      } : { gradeBand: "1-2", page: 1, sourceSlide: 1, active: false, updatedAt: null },
+      } : { gradeBand: "1-2", page: 1, sourceSlide: 1, active: false, phase: "waiting", updatedAt: null },
       updatedAt: new Date().toISOString(),
       students: query.results.map((student) => {
         const lessonResponse = responseByPlayer.get(Number(student.playerId));

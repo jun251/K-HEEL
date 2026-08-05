@@ -7,7 +7,8 @@ type StudentLessonProps = {
   token: string;
   nickname: string;
   lesson: {
-    active: true;
+    phase: "waiting" | "active" | "completed";
+    active: boolean;
     gradeBand: LessonGrade;
     page: number;
     sourceSlide: number;
@@ -27,7 +28,7 @@ const quizAnswers: Record<number, { answer: string; correctMessage: string }> = 
 export default function StudentLesson({ token, nickname, lesson }: StudentLessonProps) {
   const [feedback, setFeedback] = useState<AnswerFeedback>(null);
   const [sending, setSending] = useState(false);
-  const quiz = lesson.gradeBand === "1-2" ? quizAnswers[lesson.sourceSlide] : undefined;
+  const quiz = lesson.phase === "active" && lesson.gradeBand === "1-2" ? quizAnswers[lesson.sourceSlide] : undefined;
   const isRabbitQuestion = lesson.gradeBand === "1-2" && lesson.sourceSlide === 4;
 
   useEffect(() => {
@@ -62,6 +63,12 @@ export default function StudentLesson({ token, nickname, lesson }: StudentLesson
         <h2>{nickname}님, 화면을 함께 보세요</h2>
         <p>선생님이 페이지를 넘기면 이 화면도 자동으로 넘어갑니다.</p>
       </div>
+
+      {lesson.phase === "waiting" && (
+        <p className="student-following-note" role="status">
+          <i /> 교육자료가 먼저 표시됩니다. 선생님이 수업을 시작하면 화면이 함께 넘어가요.
+        </p>
+      )}
 
       <div className="student-lesson-stage">
         <img
