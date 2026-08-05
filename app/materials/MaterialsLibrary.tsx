@@ -18,6 +18,7 @@ const sections: Array<{
   title: string;
   description: string;
   color: string;
+  slideCount: number;
 }> = [
   {
     gradeBand: "1-2",
@@ -25,6 +26,7 @@ const sections: Array<{
     title: "1·2학년 자료",
     description: "놀이와 그림으로 경제의 첫 개념을 익히는 저학년용 자료입니다.",
     color: "lime",
+    slideCount: 24,
   },
   {
     gradeBand: "3-4",
@@ -32,6 +34,7 @@ const sections: Array<{
     title: "3·4학년 자료",
     description: "생활 속 선택과 돈의 흐름을 알아보는 중학년용 자료입니다.",
     color: "yellow",
+    slideCount: 29,
   },
   {
     gradeBand: "5-6",
@@ -39,6 +42,7 @@ const sections: Array<{
     title: "5·6학년 자료",
     description: "합리적 선택과 경제 활동을 깊이 살펴보는 고학년용 자료입니다.",
     color: "blue",
+    slideCount: 39,
   },
 ];
 
@@ -165,6 +169,13 @@ export default function MaterialsLibrary() {
             <span className="material-status">{section.title}</span>
             <h3>{section.title}</h3>
             <p>{section.description}</p>
+            <a className="material-web-link" href={`/materials/lesson/${section.gradeBand}`}>
+              <span>
+                <small>PPT 기반 웹 학습</small>
+                반응형으로 보기
+              </span>
+              <strong>{section.slideCount}쪽 <i aria-hidden="true">→</i></strong>
+            </a>
             <div className="material-file-list" aria-live="polite">
               {loading ? (
                 <p className="material-empty">자료를 불러오는 중입니다…</p>

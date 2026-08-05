@@ -115,3 +115,22 @@ test("grade 3-4 game is the rational consumer challenge with five menus", async 
   assert.match(game, /className="choice-card-image"/);
   assert.match(scores, /remaining_budget DESC/);
 });
+
+test("education materials open as responsive PPT-based web lessons", async () => {
+  const [library, lessonData, lessonViewer] = await Promise.all([
+    readFile(new URL("../app/materials/MaterialsLibrary.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/materials/lesson/lesson-data.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/materials/lesson/ResponsiveLesson.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(library, /PPT 기반 웹 학습/);
+  assert.match(library, /\/materials\/lesson\/\$\{section\.gradeBand\}/);
+  assert.match(lessonData, /"1-2"[\s\S]*?slideCount: 24/);
+  assert.match(lessonData, /"3-4"[\s\S]*?slideCount: 29/);
+  assert.match(lessonData, /"5-6"[\s\S]*?slideCount: 39/);
+  assert.match(lessonViewer, /ArrowLeft/);
+  assert.match(lessonViewer, /ArrowRight/);
+  assert.match(lessonViewer, /전체 페이지/);
+  assert.match(lessonViewer, /lesson-thumbnails/);
+  assert.match(lessonViewer, /requestFullscreen/);
+});
