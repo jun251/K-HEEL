@@ -98,6 +98,28 @@ export const studentPresence = sqliteTable("student_presence", {
   lastSeenAt: text("last_seen_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("student_presence_room_idx").on(table.roomCode)]);
 
+export const lessonControls = sqliteTable("lesson_controls", {
+  roomCode: text("room_code").primaryKey(),
+  gradeBand: text("grade_band").notNull().default("1-2"),
+  page: integer("page").notNull().default(1),
+  sourceSlide: integer("source_slide").notNull().default(1),
+  active: integer("active", { mode: "boolean" }).notNull().default(false),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const lessonResponses = sqliteTable("lesson_responses", {
+  playerId: integer("player_id").notNull(),
+  roomCode: text("room_code").notNull(),
+  gradeBand: text("grade_band").notNull(),
+  sourceSlide: integer("source_slide").notNull(),
+  answer: text("answer").notNull(),
+  isCorrect: integer("is_correct", { mode: "boolean" }).notNull().default(false),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("lesson_responses_player_slide_unique").on(table.playerId, table.sourceSlide),
+  index("lesson_responses_room_slide_idx").on(table.roomCode, table.gradeBand, table.sourceSlide),
+]);
+
 export const auditLogs = sqliteTable("audit_logs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   actorEmail: text("actor_email").notNull(),

@@ -41,3 +41,7 @@ export const lessons: Record<LessonGrade, LessonInfo> = {
 export function isLessonGrade(value: string): value is LessonGrade {
   return value === "1-2" || value === "3-4" || value === "5-6";
 }
+
+export function getLessonSourceSlide(grade: LessonGrade, page: number) {
+  return lessons[grade].slideSources?.[page - 1] ?? page;
+}

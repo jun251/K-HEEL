@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { getLessonSourceSlide, lessons, type LessonGrade } from "../materials/lesson/lesson-data";
 
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
 
@@ -13,6 +14,15 @@ type Student = {
   lastSeenAt: string | null;
   online: boolean;
   score: number | null;
+  lessonResponse: { answer: string; correct: boolean; updatedAt: string } | null;
+};
+
+type LessonControl = {
+  gradeBand: LessonGrade;
+  page: number;
+  sourceSlide: number;
+  active: boolean;
+  updatedAt?: string | null;
 };
 
 const statusLabels = {
@@ -43,6 +53,10 @@ export default function TeacherDashboard() {
   const [message, setMessage] = useState("학생 현황을 불러오는 중입니다.");
   const [authorized, setAuthorized] = useState(true);
   const [controlLoading, setControlLoading] = useState(false);
+  const [lessonControl, setLessonControl] = useState<LessonControl>({
+    gradeBand: "1-2", page: 1, sourceSlide: 1, active: false,
+  });
+  const [lessonLoading, setLessonLoading] = useState(false);
 
   const loadStatus = useCallback(async () => {
     try {
@@ -50,6 +64,7 @@ export default function TeacherDashboard() {
       const data = (await response.json()) as {
         roomCode?: string;
         control?: { state?: ClassroomState };
+        lesson?: LessonControl;
         students?: Student[];
         updatedAt?: string;
         error?: string;
@@ -63,6 +78,7 @@ export default function TeacherDashboard() {
       setAuthorized(true);
       setRoomCode(data.roomCode ?? "");
       setControlState(data.control?.state ?? "waiting");
+      if (data.lesson) setLessonControl(data.lesson);
       setStudents(data.students ?? []);
       setUpdatedAt(data.updatedAt ?? "");
       setMessage("");
@@ -98,6 +114,32 @@ export default function TeacherDashboard() {
     }
   };
 
+  const changeLesson = async (next: Partial<LessonControl>) => {
+    const gradeBand = next.gradeBand ?? lessonControl.gradeBand;
+    const page = Math.min(lessons[gradeBand].slideCount, Math.max(1, next.page ?? lessonControl.page));
+    const active = next.active ?? lessonControl.active;
+    setLessonLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/teacher/lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gradeBand, page, active }),
+      });
+      const data = (await response.json()) as LessonControl & { error?: string };
+      if (!response.ok) throw new Error(data.error || "교육자료 화면을 제어하지 못했습니다.");
+      setLessonControl(data);
+      setMessage(active
+        ? `${gradeBand.replace("-", "·")}학년 학생 화면을 ${page}쪽으로 맞췄습니다.`
+        : "학생 화면의 교육자료 수업을 종료했습니다.");
+      await loadStatus();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "교육자료 화면을 제어하지 못했습니다.");
+    } finally {
+      setLessonLoading(false);
+    }
+  };
+
   const completed = students.filter((student) => student.status === "completed").length;
   const progressing = students.filter((student) => student.status === "in_progress").length;
   const online = students.filter((student) => student.online).length;
@@ -109,6 +151,10 @@ export default function TeacherDashboard() {
     }),
     [students],
   );
+  const lessonStudents = students.filter((student) => student.gradeBand === lessonControl.gradeBand);
+  const lessonResponses = lessonStudents.filter((student) => student.lessonResponse);
+  const correctResponses = lessonResponses.filter((student) => student.lessonResponse?.correct).length;
+  const isQuizPage = [4, 17, 18, 19, 20].includes(Number(lessonControl.sourceSlide));
 
   return (
     <main className="portal-main teacher-portal">
@@ -150,6 +196,78 @@ export default function TeacherDashboard() {
                 </button>
               ))}
             </div>
+          </section>
+
+          <section className={`teacher-lesson-panel ${lessonControl.active ? "active" : ""}`}>
+            <div className="teacher-lesson-heading">
+              <div>
+                <span className="portal-badge">SYNCED LESSON</span>
+                <h2>교육자료 함께 보기</h2>
+                <p>선생님이 넘긴 페이지가 같은 학년 학생들의 모바일 화면에도 자동으로 표시됩니다.</p>
+              </div>
+              <label>
+                진행할 학년
+                <select
+                  value={lessonControl.gradeBand}
+                  disabled={lessonControl.active || lessonLoading}
+                  onChange={(event) => {
+                    const gradeBand = event.target.value as LessonGrade;
+                    setLessonControl({ gradeBand, page: 1, sourceSlide: getLessonSourceSlide(gradeBand, 1), active: false });
+                  }}
+                >
+                  <option value="1-2">1·2학년</option>
+                  <option value="3-4">3·4학년</option>
+                  <option value="5-6">5·6학년</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="teacher-lesson-controller">
+              <div className="teacher-lesson-page">
+                <small>{lessonControl.active ? "학생 화면 동기화 중" : "수업을 시작해 주세요"}</small>
+                <strong>{lessonControl.page}<span> / {lessons[lessonControl.gradeBand].slideCount}쪽</span></strong>
+              </div>
+              <div className="teacher-lesson-actions">
+                {lessonControl.active ? (
+                  <>
+                    <button disabled={lessonLoading || lessonControl.page === 1} onClick={() => void changeLesson({ page: lessonControl.page - 1 })}>← 이전</button>
+                    <a
+                      href={`/materials/lesson/${lessonControl.gradeBand}?present=1&page=${lessonControl.page}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >큰 화면 열기</a>
+                    <button disabled={lessonLoading || lessonControl.page === lessons[lessonControl.gradeBand].slideCount} onClick={() => void changeLesson({ page: lessonControl.page + 1 })}>다음 →</button>
+                    <button className="stop" disabled={lessonLoading} onClick={() => void changeLesson({ active: false })}>자료 수업 종료</button>
+                  </>
+                ) : (
+                  <button className="start" disabled={lessonLoading} onClick={() => void changeLesson({ active: true, page: 1 })}>
+                    {lessonLoading ? "연결 중…" : "자료 수업 시작"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="teacher-lesson-status">
+              <article><span>대상 학생</span><strong>{lessonStudents.length}<small>명</small></strong></article>
+              <article><span>현재 접속</span><strong>{lessonStudents.filter((student) => student.online).length}<small>명</small></strong></article>
+              <article><span>{isQuizPage ? "퀴즈 참여" : "현재 페이지"}</span><strong>{isQuizPage ? lessonResponses.length : lessonControl.page}<small>{isQuizPage ? "명" : "쪽"}</small></strong></article>
+              <article><span>{isQuizPage ? "정답 학생" : "동기화"}</span><strong>{isQuizPage ? correctResponses : (lessonControl.active ? "ON" : "OFF")}</strong></article>
+            </div>
+
+            {lessonControl.active && isQuizPage && (
+              <div className="teacher-response-list">
+                <h3>퀴즈 참여 현황</h3>
+                <ul>
+                  {lessonStudents.map((student) => (
+                    <li key={student.playerId}>
+                      <span className={student.lessonResponse ? (student.lessonResponse.correct ? "correct" : "wrong") : "waiting"} />
+                      <strong>{student.nickname}</strong>
+                      <small>{student.lessonResponse ? `${student.lessonResponse.answer} 선택 · ${student.lessonResponse.correct ? "정답" : "다시 선택 중"}` : "아직 선택하지 않음"}</small>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
 
           <section className="portal-stats teacher-stats">

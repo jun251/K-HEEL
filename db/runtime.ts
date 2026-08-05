@@ -58,6 +58,9 @@ export async function ensureGameSchema() {
     db.prepare("CREATE TABLE IF NOT EXISTS classroom_controls (room_code TEXT PRIMARY KEY, state TEXT NOT NULL DEFAULT 'waiting', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
     db.prepare("CREATE TABLE IF NOT EXISTS student_presence (player_id INTEGER PRIMARY KEY, room_code TEXT NOT NULL, last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
     db.prepare("CREATE INDEX IF NOT EXISTS student_presence_room_idx ON student_presence(room_code)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS lesson_controls (room_code TEXT PRIMARY KEY, grade_band TEXT NOT NULL DEFAULT '1-2', page INTEGER NOT NULL DEFAULT 1, source_slide INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS lesson_responses (player_id INTEGER NOT NULL, room_code TEXT NOT NULL, grade_band TEXT NOT NULL, source_slide INTEGER NOT NULL, answer TEXT NOT NULL, is_correct INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(player_id, source_slide))"),
+    db.prepare("CREATE INDEX IF NOT EXISTS lesson_responses_room_slide_idx ON lesson_responses(room_code, grade_band, source_slide)"),
     db.prepare("CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, actor_email TEXT NOT NULL, action TEXT NOT NULL, target_type TEXT NOT NULL, target_id TEXT NOT NULL, before_value TEXT, after_value TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
     db.prepare("CREATE INDEX IF NOT EXISTS audit_logs_target_idx ON audit_logs(target_type, target_id)"),
   ]);

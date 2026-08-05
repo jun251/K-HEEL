@@ -20,15 +20,57 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   const [slide, setSlide] = useState(1);
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [presentationStatus, setPresentationStatus] = useState("");
   const stageRef = useRef<HTMLElement>(null);
+
+  const syncPresentation = useCallback(async (page: number) => {
+    try {
+      const response = await fetch("/api/teacher/lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gradeBand: lesson.grade, page, active: true }),
+      });
+      if (!response.ok) throw new Error();
+      setPresentationStatus("학생 화면 동기화 중");
+    } catch {
+      setPresentationStatus("선생님 페이지에서 다시 로그인해 주세요");
+    }
+  }, [lesson.grade]);
 
   const goTo = useCallback(
     (next: number) => {
       setSlide(Math.min(lesson.slideCount, Math.max(1, next)));
       setFeedback(null);
+      const bounded = Math.min(lesson.slideCount, Math.max(1, next));
+      if (presentationMode) void syncPresentation(bounded);
     },
-    [lesson.slideCount],
+    [lesson.slideCount, presentationMode, syncPresentation],
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("present") !== "1") return;
+    const requestedPage = Math.min(lesson.slideCount, Math.max(1, Number(params.get("page")) || 1));
+    setSlide(requestedPage);
+    setPresentationMode(true);
+    void syncPresentation(requestedPage);
+  }, [lesson.slideCount, syncPresentation]);
+
+  useEffect(() => {
+    if (!presentationMode) return;
+    let disposed = false;
+    const loadTeacherLesson = async () => {
+      const response = await fetch("/api/teacher/status", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as { lesson?: { active: boolean; gradeBand: string; page: number } };
+      if (!disposed && data.lesson?.active && data.lesson.gradeBand === lesson.grade) {
+        setSlide(data.lesson.page);
+      }
+    };
+    const timer = window.setInterval(() => void loadTeacherLesson(), 2000);
+    return () => { disposed = true; window.clearInterval(timer); };
+  }, [lesson.grade, presentationMode]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -104,6 +146,8 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
           <span>pages</span>
         </div>
       </section>
+
+      {presentationMode && <div className="lesson-sync-banner"><i /> {presentationStatus || "학생 화면 연결 중"}</div>}
 
       <section className="lesson-stage-wrap" aria-label="교육자료 슬라이드">
         <section className="lesson-stage" ref={stageRef}>

@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import GradeGame, { GameOutcome } from "../GradeGame";
+import StudentLesson from "./StudentLesson";
 
 type GradeBand = "1-2" | "3-4" | "5-6";
 type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand };
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
 type BlockingClassroomState = Extract<ClassroomState, "paused" | "ended">;
+type LessonState = { active: false } | { active: true; gradeBand: GradeBand; page: number; sourceSlide: number; updatedAt?: string };
 
 function isBlockingClassroomState(state: ClassroomState): state is BlockingClassroomState {
   return state === "paused" || state === "ended";
@@ -23,6 +25,7 @@ export default function GameWindow() {
   const [status, setStatus] = useState("게임 정보를 불러오는 중이에요.");
   const [loading, setLoading] = useState(false);
   const [classroomState, setClassroomState] = useState<ClassroomState>("waiting");
+  const [lessonState, setLessonState] = useState<LessonState>({ active: false });
   const previousClassroomState = useRef<ClassroomState | null>(null);
   const completed = useRef(false);
 
@@ -58,11 +61,12 @@ export default function GameWindow() {
           cache: "no-store",
           headers: { Authorization: `Bearer ${player.token}` },
         });
-        const data = (await response.json()) as { state?: ClassroomState; error?: string };
+        const data = (await response.json()) as { state?: ClassroomState; lesson?: LessonState; error?: string };
         if (!response.ok || !data.state) throw new Error(data.error || "수업 상태를 확인하지 못했습니다.");
         if (disposed) return;
 
         setClassroomState(data.state);
+        setLessonState(data.lesson ?? { active: false });
         const wasBlocked = previousClassroomState.current
           ? isBlockingClassroomState(previousClassroomState.current)
           : true;
@@ -125,12 +129,18 @@ export default function GameWindow() {
       <section className="game-shell game-window-shell">
         {player ? (
           <>
-            <div className="game-heading">
-              <span>{gradeInfo[player.gradeBand].label} 미션</span>
-              <h2>{player.nickname}님, {gradeInfo[player.gradeBand].title}</h2>
-              <p>정답보다 더 중요한 건 왜 그렇게 선택했는지 생각하는 거예요.</p>
-            </div>
-            <GradeGame band={player.gradeBand} onFinish={finishGame} disabled={loading || blockingState !== null} />
+            {lessonState.active && lessonState.gradeBand === player.gradeBand ? (
+              <StudentLesson token={player.token} nickname={player.nickname} lesson={lessonState} />
+            ) : (
+              <>
+                <div className="game-heading">
+                  <span>{gradeInfo[player.gradeBand].label} 미션</span>
+                  <h2>{player.nickname}님, {gradeInfo[player.gradeBand].title}</h2>
+                  <p>정답보다 더 중요한 건 왜 그렇게 선택했는지 생각하는 거예요.</p>
+                </div>
+                <GradeGame band={player.gradeBand} onFinish={finishGame} disabled={loading || blockingState !== null} />
+              </>
+            )}
             {blockingState && <ClassroomOverlay state={blockingState} />}
           </>
         ) : (

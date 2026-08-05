@@ -10,11 +10,11 @@ export async function GET(request: Request) {
 
     const db = await ensureGameSchema();
     const player = await db.prepare(`
-      SELECT id, room_code AS roomCode
+      SELECT id, room_code AS roomCode, grade_band AS gradeBand
       FROM players
       WHERE session_token = ?
       LIMIT 1
-    `).bind(token).first<{ id: number; roomCode: string }>();
+    `).bind(token).first<{ id: number; roomCode: string; gradeBand: string }>();
     if (!player) return Response.json({ error: "다시 입장해 주세요." }, { status: 401 });
 
     await db.batch([
@@ -39,9 +39,31 @@ export async function GET(request: Request) {
       LIMIT 1
     `).bind(player.roomCode).first<{ state: ClassroomState; updatedAt: string }>();
 
+    const lesson = await db.prepare(`
+      SELECT grade_band AS gradeBand, page, source_slide AS sourceSlide, active, updated_at AS updatedAt
+      FROM lesson_controls
+      WHERE room_code = ?
+      LIMIT 1
+    `).bind(player.roomCode).first<{
+      gradeBand: string;
+      page: number;
+      sourceSlide: number;
+      active: number | boolean;
+      updatedAt: string;
+    }>();
+
+    const lessonActive = Boolean(lesson?.active) && lesson?.gradeBand === player.gradeBand;
+
     return Response.json({
       state: control?.state ?? "waiting",
       updatedAt: control?.updatedAt ?? new Date().toISOString(),
+      lesson: lessonActive && lesson ? {
+        active: true,
+        gradeBand: lesson.gradeBand,
+        page: Number(lesson.page),
+        sourceSlide: Number(lesson.sourceSlide),
+        updatedAt: lesson.updatedAt,
+      } : { active: false },
     });
   } catch (error) {
     return Response.json(

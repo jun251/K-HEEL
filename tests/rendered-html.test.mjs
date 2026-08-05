@@ -145,3 +145,31 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(styles, /lesson-answer-mask\.rabbit \{ bottom:3%; height:25%/);
 });
+
+test("teacher-led lessons synchronize student pages and report quiz participation", async () => {
+  const [runtime, teacherLesson, classroomStatus, lessonResponse, teacherStatus, teacherPage, gamePage, studentLesson] = await Promise.all([
+    readFile(new URL("../db/runtime.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/teacher/lesson/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/classroom/status/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/classroom/lesson-response/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/teacher/status/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/teacher/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/game/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/game/StudentLesson.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(runtime, /CREATE TABLE IF NOT EXISTS lesson_controls/);
+  assert.match(runtime, /CREATE TABLE IF NOT EXISTS lesson_responses/);
+  assert.match(teacherLesson, /INSERT INTO lesson_controls/);
+  assert.match(teacherLesson, /sourceSlide/);
+  assert.match(classroomStatus, /lessonActive/);
+  assert.match(classroomStatus, /sourceSlide/);
+  assert.match(lessonResponse, /ON CONFLICT\(player_id, source_slide\)/);
+  assert.match(teacherStatus, /lessonResponse/);
+  assert.match(teacherPage, /교육자료 함께 보기/);
+  assert.match(teacherPage, /퀴즈 참여 현황/);
+  assert.match(teacherPage, /큰 화면 열기/);
+  assert.match(gamePage, /<StudentLesson/);
+  assert.match(studentLesson, /선생님이 페이지를 넘기면 이 화면도 자동으로 넘어갑니다/);
+  assert.match(studentLesson, /\/api\/classroom\/lesson-response/);
+});

@@ -20,6 +20,19 @@ export async function GET(request: Request) {
       LIMIT 1
     `).bind(roomCode).first<{ state: string; updatedAt: string }>();
 
+    const lesson = await db.prepare(`
+      SELECT grade_band AS gradeBand, page, source_slide AS sourceSlide, active, updated_at AS updatedAt
+      FROM lesson_controls
+      WHERE room_code = ?
+      LIMIT 1
+    `).bind(roomCode).first<{
+      gradeBand: string;
+      page: number;
+      sourceSlide: number;
+      active: number | boolean;
+      updatedAt: string;
+    }>();
+
     const query = await db.prepare(`
       SELECT
         p.id AS playerId,
@@ -53,17 +66,45 @@ export async function GET(request: Request) {
       score: number | null;
     }>();
 
+    const responseQuery = lesson?.active ? await db.prepare(`
+      SELECT player_id AS playerId, answer, is_correct AS isCorrect, updated_at AS updatedAt
+      FROM lesson_responses
+      WHERE room_code = ? AND grade_band = ? AND source_slide = ?
+    `).bind(roomCode, lesson.gradeBand, lesson.sourceSlide).all<{
+      playerId: number;
+      answer: string;
+      isCorrect: number | boolean;
+      updatedAt: string;
+    }>() : { results: [] };
+
+    const responseByPlayer = new Map(responseQuery.results.map((response) => [Number(response.playerId), response]));
+
     return Response.json({
       roomCode,
       control: {
         state: control?.state ?? "waiting",
         updatedAt: control?.updatedAt ?? null,
       },
+      lesson: lesson ? {
+        gradeBand: lesson.gradeBand,
+        page: Number(lesson.page),
+        sourceSlide: Number(lesson.sourceSlide),
+        active: Boolean(lesson.active),
+        updatedAt: lesson.updatedAt,
+      } : { gradeBand: "1-2", page: 1, sourceSlide: 1, active: false, updatedAt: null },
       updatedAt: new Date().toISOString(),
-      students: query.results.map((student) => ({
-        ...student,
-        online: Boolean(student.online),
-      })),
+      students: query.results.map((student) => {
+        const lessonResponse = responseByPlayer.get(Number(student.playerId));
+        return {
+          ...student,
+          online: Boolean(student.online),
+          lessonResponse: lessonResponse ? {
+            answer: lessonResponse.answer,
+            correct: Boolean(lessonResponse.isCorrect),
+            updatedAt: lessonResponse.updatedAt,
+          } : null,
+        };
+      }),
     });
   } catch (error) {
     return Response.json(
