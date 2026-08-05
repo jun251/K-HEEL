@@ -26,7 +26,7 @@ const sections: Array<{
     title: "1·2학년 자료",
     description: "놀이와 그림으로 경제의 첫 개념을 익히는 저학년용 자료입니다.",
     color: "lime",
-    slideCount: 24,
+    slideCount: 23,
   },
   {
     gradeBand: "3-4",

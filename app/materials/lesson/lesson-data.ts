@@ -6,6 +6,7 @@ export type LessonInfo = {
   title: string;
   description: string;
   slideCount: number;
+  slideSources?: number[];
   accent: string;
 };
 
@@ -15,7 +16,8 @@ export const lessons: Record<LessonGrade, LessonInfo> = {
     label: "1·2학년",
     title: "K-HEEL 탐험대!",
     description: "필요한 것과 원하는 것을 놀이와 퀴즈로 구분해 봅니다.",
-    slideCount: 24,
+    slideCount: 23,
+    slideSources: [1, 2, ...Array.from({ length: 21 }, (_, index) => index + 4)],
     accent: "lime",
   },
   "3-4": {
@@ -39,4 +41,3 @@ export const lessons: Record<LessonGrade, LessonInfo> = {
 export function isLessonGrade(value: string): value is LessonGrade {
   return value === "1-2" || value === "3-4" || value === "5-6";
 }
-

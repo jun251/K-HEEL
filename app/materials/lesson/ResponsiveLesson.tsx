@@ -3,6 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LessonInfo } from "./lesson-data";
 
+type Choice = "water" | "balloon" | "crown" | "O" | "X";
+
+const oxQuizzes: Record<number, { answer: "O" | "X"; feedback: string }> = {
+  17: { answer: "X", feedback: "정답 X · 그것은 원하는 것에 가까워요." },
+  18: { answer: "O", feedback: "정답 O · 물은 목마름을 해결해 주는 필요한 것이에요." },
+  19: { answer: "O", feedback: "정답 O · 원하는 마음도 소중해요." },
+  20: { answer: "X", feedback: "정답 X · 필요 없는 물건인지 먼저 생각해요." },
+};
+
 type ResponsiveLessonProps = {
   lesson: LessonInfo;
 };
@@ -10,17 +19,20 @@ type ResponsiveLessonProps = {
 export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   const [slide, setSlide] = useState(1);
   const [overviewOpen, setOverviewOpen] = useState(false);
+  const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
   const stageRef = useRef<HTMLElement>(null);
 
   const goTo = useCallback(
     (next: number) => {
       setSlide(Math.min(lesson.slideCount, Math.max(1, next)));
+      setFeedback(null);
     },
     [lesson.slideCount],
   );
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (event.target instanceof HTMLButtonElement || event.target instanceof HTMLInputElement) return;
       if (event.key === "ArrowLeft") goTo(slide - 1);
       if (event.key === "ArrowRight" || event.key === " ") {
         event.preventDefault();
@@ -41,8 +53,30 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
     }
   }
 
-  const imagePath = `/lesson-slides/grade-${lesson.grade}/slide-${slide}.png`;
+  const sourceSlide = lesson.slideSources?.[slide - 1] ?? slide;
+  const imagePath = `/lesson-slides/grade-${lesson.grade}/slide-${sourceSlide}.png`;
   const progress = (slide / lesson.slideCount) * 100;
+  const isRabbitQuestion = lesson.grade === "1-2" && sourceSlide === 4;
+  const oxQuiz = lesson.grade === "1-2" ? oxQuizzes[sourceSlide] : undefined;
+
+  function choose(choice: Choice) {
+    if (isRabbitQuestion) {
+      setFeedback(
+        choice === "water"
+          ? { correct: true, message: "정답: 물! 목마름을 해결해 주기 때문이에요." }
+          : { correct: false, message: "땡! 다시 선택해보세요." },
+      );
+      return;
+    }
+
+    if (oxQuiz) {
+      setFeedback(
+        choice === oxQuiz.answer
+          ? { correct: true, message: oxQuiz.feedback }
+          : { correct: false, message: "땡! 다시 골라보세요." },
+      );
+    }
+  }
 
   return (
     <main className={`lesson-page lesson-${lesson.accent}`}>
@@ -78,10 +112,37 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
             alt={`${lesson.label} 교육자료 ${slide}페이지`}
             key={imagePath}
           />
+          {isRabbitQuestion && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
+          {oxQuiz && <span className="lesson-answer-mask ox" aria-hidden="true" />}
           <button className="lesson-fullscreen" type="button" onClick={() => void toggleFullscreen()}>
             크게 보기
           </button>
         </section>
+
+        {(isRabbitQuestion || oxQuiz) && (
+          <section className="lesson-activity" aria-label="문제 선택">
+            <p>{isRabbitQuestion ? "토끼가 가장 먼저 필요한 것을 골라보세요." : "O 또는 X를 골라보세요."}</p>
+            <div className={isRabbitQuestion ? "lesson-rabbit-choices" : "lesson-ox-choices"}>
+              {isRabbitQuestion ? (
+                <>
+                  <button type="button" onClick={() => choose("water")}><span aria-hidden="true">💧</span> 물</button>
+                  <button type="button" onClick={() => choose("balloon")}><span aria-hidden="true">🎈</span> 풍선</button>
+                  <button type="button" onClick={() => choose("crown")}><span aria-hidden="true">👑</span> 왕관</button>
+                </>
+              ) : (
+                <>
+                  <button type="button" onClick={() => choose("O")} aria-label="O 선택">O</button>
+                  <button type="button" onClick={() => choose("X")} aria-label="X 선택">X</button>
+                </>
+              )}
+            </div>
+            {feedback && (
+              <p className={`lesson-feedback ${feedback.correct ? "correct" : "wrong"}`} role="status">
+                {feedback.message}
+              </p>
+            )}
+          </section>
+        )}
 
         <div className="lesson-progress" aria-hidden="true">
           <span style={{ width: `${progress}%` }} />
@@ -125,7 +186,7 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
                   aria-current={page === slide ? "page" : undefined}
                 >
                   <img
-                    src={`/lesson-slides/grade-${lesson.grade}/slide-${page}.png`}
+                    src={`/lesson-slides/grade-${lesson.grade}/slide-${lesson.slideSources?.[page - 1] ?? page}.png`}
                     alt=""
                     loading="lazy"
                   />
@@ -139,4 +200,3 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
     </main>
   );
 }
-

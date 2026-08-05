@@ -125,7 +125,8 @@ test("education materials open as responsive PPT-based web lessons", async () =>
 
   assert.match(library, /PPT 기반 웹 학습/);
   assert.match(library, /\/materials\/lesson\/\$\{section\.gradeBand\}/);
-  assert.match(lessonData, /"1-2"[\s\S]*?slideCount: 24/);
+  assert.match(lessonData, /"1-2"[\s\S]*?slideCount: 23/);
+  assert.match(lessonData, /slideSources: \[1, 2,/);
   assert.match(lessonData, /"3-4"[\s\S]*?slideCount: 29/);
   assert.match(lessonData, /"5-6"[\s\S]*?slideCount: 39/);
   assert.match(lessonViewer, /ArrowLeft/);
@@ -133,4 +134,12 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(lessonViewer, /전체 페이지/);
   assert.match(lessonViewer, /lesson-thumbnails/);
   assert.match(lessonViewer, /requestFullscreen/);
+  assert.match(lessonViewer, /sourceSlide === 4/);
+  assert.match(lessonViewer, /토끼가 가장 먼저 필요한 것을 골라보세요/);
+  assert.match(lessonViewer, /정답: 물! 목마름을 해결해 주기 때문이에요/);
+  assert.match(lessonViewer, /17: \{ answer: "X"/);
+  assert.match(lessonViewer, /18: \{ answer: "O"/);
+  assert.match(lessonViewer, /19: \{ answer: "O"/);
+  assert.match(lessonViewer, /20: \{ answer: "X"/);
+  assert.match(lessonViewer, /땡! 다시 골라보세요/);
 });
