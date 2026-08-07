@@ -160,7 +160,10 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(grade34Activities, /choices: \["예금", "적금"\]/);
   assert.match(grade34Activities, /choices: \["3일", "5일"\]/);
   assert.match(grade34Activities, /땡! 다시 선택해 보세요/);
-  assert.match(lessonViewer, /grade34-unit-answer/);
+  assert.match(lessonViewer, /Grade34UnitPriceSlide/);
+  assert.match(grade34Activities, /100mL당/);
+  assert.match(grade34Activities, /먼저 예상해 보세요/);
+  assert.doesNotMatch(lessonViewer, /grade34-unit-answer/);
   assert.match(lessonViewer, /grade34-golden-answer/);
   const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(styles, /lesson-answer-mask\.rabbit \{ bottom:3%; height:25%/);

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getLessonSourceSlide, lessons, type LessonGrade } from "../materials/lesson/lesson-data";
+import { Grade34UnitPriceSlide } from "../materials/lesson/Grade34Activities";
 
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
 
@@ -272,19 +273,16 @@ export default function TeacherDashboard() {
                   <strong>{lessonControl.gradeBand.replace("-", "·")}학년 · {lessonControl.page}쪽</strong>
                 </div>
                 <div className="teacher-lesson-preview-stage">
-                  <img
-                    src={`/lesson-slides/grade-${lessonControl.gradeBand}/slide-${lessonControl.sourceSlide}.png`}
-                    alt={`${lessonControl.gradeBand.replace("-", "·")}학년 교육자료 ${lessonControl.page}페이지`}
-                  />
+                  {lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 9 ? (
+                    <Grade34UnitPriceSlide revealed={false} />
+                  ) : (
+                    <img
+                      src={`/lesson-slides/grade-${lessonControl.gradeBand}/slide-${lessonControl.sourceSlide}.png`}
+                      alt={`${lessonControl.gradeBand.replace("-", "·")}학년 교육자료 ${lessonControl.page}페이지`}
+                    />
+                  )}
                   {lessonControl.gradeBand === "1-2" && lessonControl.sourceSlide === 4 && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
                   {lessonControl.gradeBand === "1-2" && [17, 18, 19, 20].includes(lessonControl.sourceSlide) && <span className="lesson-answer-mask ox" aria-hidden="true" />}
-                  {lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 9 && (
-                    <>
-                      <span className="lesson-answer-mask grade34-unit-a" aria-hidden="true" />
-                      <span className="lesson-answer-mask grade34-unit-b" aria-hidden="true" />
-                      <span className="lesson-answer-mask grade34-unit-answer" aria-hidden="true" />
-                    </>
-                  )}
                   {lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 26 && (
                     <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
                   )}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LessonInfo } from "./lesson-data";
-import Grade34Activities from "./Grade34Activities";
+import Grade34Activities, { Grade34UnitPriceSlide } from "./Grade34Activities";
 
 type Choice = "water" | "balloon" | "crown" | "O" | "X";
 
@@ -161,20 +161,17 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
 
       <section className="lesson-stage-wrap" aria-label="교육자료 슬라이드">
         <section className="lesson-stage" ref={stageRef}>
-          <img
-            src={imagePath}
-            alt={`${lesson.label} 교육자료 ${slide}페이지`}
-            key={imagePath}
-          />
+          {lesson.grade === "3-4" && sourceSlide === 9 ? (
+            <Grade34UnitPriceSlide revealed={unitPriceRevealed} />
+          ) : (
+            <img
+              src={imagePath}
+              alt={`${lesson.label} 교육자료 ${slide}페이지`}
+              key={imagePath}
+            />
+          )}
           {isRabbitQuestion && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
           {oxQuiz && <span className="lesson-answer-mask ox" aria-hidden="true" />}
-          {lesson.grade === "3-4" && sourceSlide === 9 && !unitPriceRevealed && (
-            <>
-              <span className="lesson-answer-mask grade34-unit-a" aria-hidden="true" />
-              <span className="lesson-answer-mask grade34-unit-b" aria-hidden="true" />
-              <span className="lesson-answer-mask grade34-unit-answer" aria-hidden="true" />
-            </>
-          )}
           {lesson.grade === "3-4" && sourceSlide === 26 && (
             <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
           )}

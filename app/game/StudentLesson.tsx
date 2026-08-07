@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { LessonGrade } from "../materials/lesson/lesson-data";
-import Grade34Activities from "../materials/lesson/Grade34Activities";
+import Grade34Activities, { Grade34UnitPriceSlide } from "../materials/lesson/Grade34Activities";
 
 type StudentLessonProps = {
   token: string;
@@ -75,19 +75,16 @@ export default function StudentLesson({ token, nickname, lesson }: StudentLesson
       )}
 
       <div className="student-lesson-stage">
-        <img
-          src={`/lesson-slides/grade-${lesson.gradeBand}/slide-${lesson.sourceSlide}.png`}
-          alt={`${lesson.gradeBand.replace("-", "·")}학년 교육자료 ${lesson.page}페이지`}
-        />
+        {lesson.gradeBand === "3-4" && lesson.sourceSlide === 9 ? (
+          <Grade34UnitPriceSlide revealed={unitPriceRevealed} />
+        ) : (
+          <img
+            src={`/lesson-slides/grade-${lesson.gradeBand}/slide-${lesson.sourceSlide}.png`}
+            alt={`${lesson.gradeBand.replace("-", "·")}학년 교육자료 ${lesson.page}페이지`}
+          />
+        )}
         {isRabbitQuestion && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
         {quiz && !isRabbitQuestion && <span className="lesson-answer-mask ox" aria-hidden="true" />}
-        {lesson.gradeBand === "3-4" && lesson.sourceSlide === 9 && !unitPriceRevealed && (
-          <>
-            <span className="lesson-answer-mask grade34-unit-a" aria-hidden="true" />
-            <span className="lesson-answer-mask grade34-unit-b" aria-hidden="true" />
-            <span className="lesson-answer-mask grade34-unit-answer" aria-hidden="true" />
-          </>
-        )}
         {lesson.gradeBand === "3-4" && lesson.sourceSlide === 26 && (
           <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
         )}

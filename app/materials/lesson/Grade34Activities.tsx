@@ -24,6 +24,42 @@ const goldenBellQuestions = [
   { question: "같은 일을 더 빨리 끝낸 기간은?", choices: ["3일", "5일"], answer: "3일" },
 ] as const;
 
+export function Grade34UnitPriceSlide({ revealed }: { revealed: boolean }) {
+  const products = [
+    { label: "A", volume: "500mL", price: "2,000원", unitPrice: "400원", tone: "mint" },
+    { label: "B", volume: "1,000mL", price: "3,000원", unitPrice: "300원", tone: "yellow" },
+  ] as const;
+
+  return (
+    <section className="unit-price-slide" aria-label="100밀리리터당 가격 비교">
+      <header>
+        <span>단위 가격 비교</span>
+        <h2>어느 음료가 더 저렴할까요?</h2>
+        <p>양이 다를 때는 같은 양을 기준으로 비교해요.</p>
+      </header>
+      <div className="unit-price-products">
+        {products.map((product) => (
+          <article className={`unit-price-product ${product.tone}`} key={product.label}>
+            <b>{product.label}</b>
+            <div className="unit-price-bottle" aria-hidden="true"><i /></div>
+            <dl>
+              <div><dt>용량</dt><dd>{product.volume}</dd></div>
+              <div><dt>가격</dt><dd>{product.price}</dd></div>
+            </dl>
+            <div className={`unit-price-result ${revealed ? "revealed" : "hidden"}`}>
+              <span>100mL당</span>
+              <strong>{revealed ? product.unitPrice : "?원"}</strong>
+            </div>
+          </article>
+        ))}
+      </div>
+      <footer className={revealed ? "revealed" : ""}>
+        {revealed ? <><strong>정답은 B!</strong><span>100mL당 300원으로 A보다 100원 더 저렴해요.</span></> : <><strong>먼저 예상해 보세요</strong><span>아래에서 A 또는 B를 선택하면 단위 가격이 공개돼요.</span></>}
+      </footer>
+    </section>
+  );
+}
+
 export default function Grade34Activities({ sourceSlide, token, onUnitPriceReveal }: Props) {
   const [surveyChoice, setSurveyChoice] = useState("");
   const [sending, setSending] = useState(false);
