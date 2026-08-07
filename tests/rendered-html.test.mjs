@@ -117,10 +117,11 @@ test("grade 3-4 game is the rational consumer challenge with five menus", async 
 });
 
 test("education materials open as responsive PPT-based web lessons", async () => {
-  const [library, lessonData, lessonViewer] = await Promise.all([
+  const [library, lessonData, lessonViewer, grade34Activities] = await Promise.all([
     readFile(new URL("../app/materials/MaterialsLibrary.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/lesson-data.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/ResponsiveLesson.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/materials/lesson/Grade34Activities.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(library, /PPT 기반 웹 학습/);
@@ -147,6 +148,20 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(lessonViewer, /선생님 발표 화면/);
   assert.match(lessonViewer, /lesson-presentation-mode/);
   assert.doesNotMatch(lessonViewer, /선생님 페이지에서 다시 로그인해 주세요/);
+  assert.match(grade34Activities, /1\. 번개형/);
+  assert.match(grade34Activities, /2\. 반반형/);
+  assert.match(grade34Activities, /3\. 거북이형/);
+  assert.match(grade34Activities, /draggable/);
+  assert.match(grade34Activities, /2,000원/);
+  assert.match(grade34Activities, /100mL당 400원/);
+  assert.match(grade34Activities, /100mL당 300원/);
+  assert.match(grade34Activities, /choices: \["1,000mL", "500mL"\]/);
+  assert.match(grade34Activities, /choices: \["복리", "단리"\]/);
+  assert.match(grade34Activities, /choices: \["예금", "적금"\]/);
+  assert.match(grade34Activities, /choices: \["3일", "5일"\]/);
+  assert.match(grade34Activities, /땡! 다시 선택해 보세요/);
+  assert.match(lessonViewer, /grade34-unit-answer/);
+  assert.match(lessonViewer, /grade34-golden-answer/);
   const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(styles, /lesson-answer-mask\.rabbit \{ bottom:3%; height:25%/);
 });
@@ -173,9 +188,13 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
   assert.match(classroomStatus, /lessonActive/);
   assert.match(classroomStatus, /sourceSlide/);
   assert.match(lessonResponse, /ON CONFLICT\(player_id, source_slide\)/);
+  assert.match(lessonResponse, /grade34SurveyAnswers/);
+  assert.match(lessonResponse, /sourceSlide === 3/);
   assert.match(teacherStatus, /lessonResponse/);
   assert.match(teacherPage, /경제교육부터 게임까지 한 번에 진행/);
   assert.match(teacherPage, /퀴즈 참여 현황/);
+  assert.match(teacherPage, /소비 성향 선택 비율/);
+  assert.match(teacherPage, /teacher-survey-row/);
   assert.match(teacherPage, /큰 화면 열기/);
   assert.match(teacherPage, /data-testid="teacher-lesson-preview"/);
   assert.match(teacherPage, /학생 화면과 같은 페이지/);

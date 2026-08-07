@@ -170,7 +170,13 @@ export default function TeacherDashboard() {
   const lessonStudents = students.filter((student) => student.gradeBand === lessonControl.gradeBand);
   const lessonResponses = lessonStudents.filter((student) => student.lessonResponse);
   const correctResponses = lessonResponses.filter((student) => student.lessonResponse?.correct).length;
-  const isQuizPage = [4, 17, 18, 19, 20].includes(Number(lessonControl.sourceSlide));
+  const isQuizPage = lessonControl.gradeBand === "1-2" && [4, 17, 18, 19, 20].includes(Number(lessonControl.sourceSlide));
+  const isSurveyPage = lessonControl.gradeBand === "3-4" && Number(lessonControl.sourceSlide) === 3;
+  const surveyChoices = [
+    { value: "lightning", label: "1. 번개형" },
+    { value: "half", label: "2. 반반형" },
+    { value: "turtle", label: "3. 거북이형" },
+  ];
 
   return (
     <main className="portal-main teacher-portal">
@@ -272,6 +278,16 @@ export default function TeacherDashboard() {
                   />
                   {lessonControl.gradeBand === "1-2" && lessonControl.sourceSlide === 4 && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
                   {lessonControl.gradeBand === "1-2" && [17, 18, 19, 20].includes(lessonControl.sourceSlide) && <span className="lesson-answer-mask ox" aria-hidden="true" />}
+                  {lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 9 && (
+                    <>
+                      <span className="lesson-answer-mask grade34-unit-a" aria-hidden="true" />
+                      <span className="lesson-answer-mask grade34-unit-b" aria-hidden="true" />
+                      <span className="lesson-answer-mask grade34-unit-answer" aria-hidden="true" />
+                    </>
+                  )}
+                  {lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 26 && (
+                    <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
+                  )}
                 </div>
               </div>
             )}
@@ -279,9 +295,29 @@ export default function TeacherDashboard() {
             <div className="teacher-lesson-status">
               <article><span>대상 학생</span><strong>{lessonStudents.length}<small>명</small></strong></article>
               <article><span>현재 접속</span><strong>{lessonStudents.filter((student) => student.online).length}<small>명</small></strong></article>
-              <article><span>{isQuizPage ? "퀴즈 참여" : "현재 페이지"}</span><strong>{isQuizPage ? lessonResponses.length : lessonControl.page}<small>{isQuizPage ? "명" : "쪽"}</small></strong></article>
-              <article><span>{isQuizPage ? "정답 학생" : "동기화"}</span><strong>{isQuizPage ? correctResponses : (lessonControl.active ? "ON" : "OFF")}</strong></article>
+              <article><span>{isSurveyPage ? "성향 선택" : isQuizPage ? "퀴즈 참여" : "현재 페이지"}</span><strong>{isSurveyPage || isQuizPage ? lessonResponses.length : lessonControl.page}<small>{isSurveyPage || isQuizPage ? "명" : "쪽"}</small></strong></article>
+              <article><span>{isSurveyPage ? "응답률" : isQuizPage ? "정답 학생" : "동기화"}</span><strong>{isSurveyPage ? `${lessonStudents.length ? Math.round((lessonResponses.length / lessonStudents.length) * 100) : 0}%` : isQuizPage ? correctResponses : (lessonControl.active ? "ON" : "OFF")}</strong></article>
             </div>
+
+            {lessonControl.active && isSurveyPage && (
+              <div className="teacher-survey-results">
+                <div className="teacher-survey-heading">
+                  <h3>소비 성향 선택 비율</h3>
+                  <span>{lessonResponses.length}명 응답</span>
+                </div>
+                {surveyChoices.map((choice) => {
+                  const count = lessonResponses.filter((student) => student.lessonResponse?.answer === choice.value).length;
+                  const ratio = lessonResponses.length ? Math.round((count / lessonResponses.length) * 100) : 0;
+                  return (
+                    <div className="teacher-survey-row" key={choice.value}>
+                      <strong>{choice.label}</strong>
+                      <div><span style={{ width: `${ratio}%` }} /></div>
+                      <b>{ratio}% <small>({count}명)</small></b>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {lessonControl.active && isQuizPage && (
               <div className="teacher-response-list">

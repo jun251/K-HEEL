@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LessonInfo } from "./lesson-data";
+import Grade34Activities from "./Grade34Activities";
 
 type Choice = "water" | "balloon" | "crown" | "O" | "X";
 
@@ -22,6 +23,7 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
   const [presentationMode, setPresentationMode] = useState(false);
   const [presentationStatus, setPresentationStatus] = useState("");
+  const [unitPriceRevealed, setUnitPriceRevealed] = useState(false);
   const stageRef = useRef<HTMLElement>(null);
 
   const syncPresentation = useCallback((page: number) => {
@@ -93,6 +95,11 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   const progress = (slide / lesson.slideCount) * 100;
   const isRabbitQuestion = lesson.grade === "1-2" && sourceSlide === 4;
   const oxQuiz = lesson.grade === "1-2" ? oxQuizzes[sourceSlide] : undefined;
+  const isGrade34Activity = lesson.grade === "3-4" && [3, 8, 9, 26].includes(sourceSlide);
+
+  useEffect(() => {
+    setUnitPriceRevealed(false);
+  }, [sourceSlide]);
 
   function choose(choice: Choice) {
     if (isRabbitQuestion) {
@@ -161,6 +168,16 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
           />
           {isRabbitQuestion && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
           {oxQuiz && <span className="lesson-answer-mask ox" aria-hidden="true" />}
+          {lesson.grade === "3-4" && sourceSlide === 9 && !unitPriceRevealed && (
+            <>
+              <span className="lesson-answer-mask grade34-unit-a" aria-hidden="true" />
+              <span className="lesson-answer-mask grade34-unit-b" aria-hidden="true" />
+              <span className="lesson-answer-mask grade34-unit-answer" aria-hidden="true" />
+            </>
+          )}
+          {lesson.grade === "3-4" && sourceSlide === 26 && (
+            <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
+          )}
           <button className="lesson-fullscreen" type="button" onClick={() => void toggleFullscreen()}>
             크게 보기
           </button>
@@ -189,6 +206,10 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
               </p>
             )}
           </section>
+        )}
+
+        {isGrade34Activity && (
+          <Grade34Activities sourceSlide={sourceSlide} onUnitPriceReveal={setUnitPriceRevealed} />
         )}
 
         <div className="lesson-progress" aria-hidden="true">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { LessonGrade } from "../materials/lesson/lesson-data";
+import Grade34Activities from "../materials/lesson/Grade34Activities";
 
 type StudentLessonProps = {
   token: string;
@@ -28,11 +29,14 @@ const quizAnswers: Record<number, { answer: string; correctMessage: string }> = 
 export default function StudentLesson({ token, nickname, lesson }: StudentLessonProps) {
   const [feedback, setFeedback] = useState<AnswerFeedback>(null);
   const [sending, setSending] = useState(false);
+  const [unitPriceRevealed, setUnitPriceRevealed] = useState(false);
   const quiz = lesson.phase === "active" && lesson.gradeBand === "1-2" ? quizAnswers[lesson.sourceSlide] : undefined;
   const isRabbitQuestion = lesson.gradeBand === "1-2" && lesson.sourceSlide === 4;
+  const isGrade34Activity = lesson.phase === "active" && lesson.gradeBand === "3-4" && [3, 8, 9, 26].includes(lesson.sourceSlide);
 
   useEffect(() => {
     setFeedback(null);
+    setUnitPriceRevealed(false);
   }, [lesson.sourceSlide]);
 
   async function answer(value: string) {
@@ -77,8 +81,22 @@ export default function StudentLesson({ token, nickname, lesson }: StudentLesson
         />
         {isRabbitQuestion && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
         {quiz && !isRabbitQuestion && <span className="lesson-answer-mask ox" aria-hidden="true" />}
+        {lesson.gradeBand === "3-4" && lesson.sourceSlide === 9 && !unitPriceRevealed && (
+          <>
+            <span className="lesson-answer-mask grade34-unit-a" aria-hidden="true" />
+            <span className="lesson-answer-mask grade34-unit-b" aria-hidden="true" />
+            <span className="lesson-answer-mask grade34-unit-answer" aria-hidden="true" />
+          </>
+        )}
+        {lesson.gradeBand === "3-4" && lesson.sourceSlide === 26 && (
+          <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
+        )}
         <span className="student-lesson-page">{lesson.page}쪽</span>
       </div>
+
+      {isGrade34Activity && (
+        <Grade34Activities sourceSlide={lesson.sourceSlide} token={token} onUnitPriceReveal={setUnitPriceRevealed} />
+      )}
 
       {quiz ? (
         <section className="lesson-activity student-lesson-activity" aria-label="퀴즈 참여">
@@ -99,9 +117,9 @@ export default function StudentLesson({ token, nickname, lesson }: StudentLesson
           </div>
           {feedback && <p className={`lesson-feedback ${feedback.correct ? "correct" : "wrong"}`} role="status">{feedback.message}</p>}
         </section>
-      ) : (
+      ) : !isGrade34Activity ? (
         <p className="student-following-note"><i /> 선생님의 설명을 들으며 화면을 함께 보세요.</p>
-      )}
+      ) : null}
     </section>
   );
 }
