@@ -117,11 +117,12 @@ test("grade 3-4 game is the rational consumer challenge with five menus", async 
 });
 
 test("education materials open as responsive PPT-based web lessons", async () => {
-  const [library, lessonData, lessonViewer, grade34Activities] = await Promise.all([
+  const [library, lessonData, lessonViewer, grade34Activities, grade56Activities] = await Promise.all([
     readFile(new URL("../app/materials/MaterialsLibrary.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/lesson-data.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/ResponsiveLesson.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/Grade34Activities.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/materials/lesson/Grade56Activities.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(library, /PPT 기반 웹 학습/);
@@ -165,6 +166,18 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(grade34Activities, /먼저 예상해 보세요/);
   assert.doesNotMatch(lessonViewer, /grade34-unit-answer/);
   assert.match(lessonViewer, /grade34-golden-answer/);
+  assert.match(grade56Activities, /입금/);
+  assert.match(grade56Activities, /출금/);
+  assert.match(grade56Activities, /송금/);
+  assert.match(grade56Activities, /draggable/);
+  assert.match(grade56Activities, /safetyQuestions[\s\S]*?answer: "X"[\s\S]*?answer: "X"[\s\S]*?answer: "O"[\s\S]*?answer: "X"/);
+  assert.match(grade56Activities, /priceQuestions[\s\S]*?가격이 올라간다[\s\S]*?가격이 올라간다[\s\S]*?가격이 내려간다/);
+  assert.match(grade56Activities, /consumptionQuestions[\s\S]*?answer: "O"[\s\S]*?answer: "X"[\s\S]*?answer: "X"/);
+  assert.match(grade56Activities, /이건 투자가 아니라 소비예요/);
+  assert.match(grade56Activities, /slide-23\.png/);
+  assert.match(grade56Activities, /slide-24\.png/);
+  assert.match(grade56Activities, /slide-25\.png/);
+  assert.match(lessonViewer, /Grade56InvestmentChoice/);
   const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(styles, /lesson-answer-mask\.rabbit \{ bottom:3%; height:25%/);
 });

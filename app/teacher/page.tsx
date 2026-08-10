@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getLessonSourceSlide, lessons, type LessonGrade } from "../materials/lesson/lesson-data";
 import { Grade34UnitPriceSlide } from "../materials/lesson/Grade34Activities";
+import { Grade56InvestmentChoice } from "../materials/lesson/Grade56Activities";
 
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
 
@@ -275,6 +276,8 @@ export default function TeacherDashboard() {
                 <div className="teacher-lesson-preview-stage">
                   {lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 9 ? (
                     <Grade34UnitPriceSlide revealed={false} />
+                  ) : lessonControl.gradeBand === "5-6" && [23, 24].includes(lessonControl.sourceSlide) ? (
+                    <Grade56InvestmentChoice key={lessonControl.sourceSlide} readOnly />
                   ) : (
                     <img
                       src={`/lesson-slides/grade-${lessonControl.gradeBand}/slide-${lessonControl.sourceSlide}.png`}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LessonInfo } from "./lesson-data";
 import Grade34Activities, { Grade34UnitPriceSlide } from "./Grade34Activities";
+import Grade56Activities, { Grade56InvestmentChoice } from "./Grade56Activities";
 
 type Choice = "water" | "balloon" | "crown" | "O" | "X";
 
@@ -96,6 +97,7 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   const isRabbitQuestion = lesson.grade === "1-2" && sourceSlide === 4;
   const oxQuiz = lesson.grade === "1-2" ? oxQuizzes[sourceSlide] : undefined;
   const isGrade34Activity = lesson.grade === "3-4" && [3, 8, 9, 26].includes(sourceSlide);
+  const isGrade56Activity = lesson.grade === "5-6" && [9, 10, 16, 19].includes(sourceSlide);
 
   useEffect(() => {
     setUnitPriceRevealed(false);
@@ -163,6 +165,8 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
         <section className="lesson-stage" ref={stageRef}>
           {lesson.grade === "3-4" && sourceSlide === 9 ? (
             <Grade34UnitPriceSlide revealed={unitPriceRevealed} />
+          ) : lesson.grade === "5-6" && [23, 24].includes(sourceSlide) ? (
+            <Grade56InvestmentChoice key={sourceSlide} onCorrect={() => goTo(25)} />
           ) : (
             <img
               src={imagePath}
@@ -208,6 +212,7 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
         {isGrade34Activity && (
           <Grade34Activities sourceSlide={sourceSlide} onUnitPriceReveal={setUnitPriceRevealed} />
         )}
+        {isGrade56Activity && <Grade56Activities key={sourceSlide} sourceSlide={sourceSlide} />}
 
         <div className="lesson-progress" aria-hidden="true">
           <span style={{ width: `${progress}%` }} />

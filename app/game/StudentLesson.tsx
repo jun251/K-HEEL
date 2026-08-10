@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { LessonGrade } from "../materials/lesson/lesson-data";
 import Grade34Activities, { Grade34UnitPriceSlide } from "../materials/lesson/Grade34Activities";
+import Grade56Activities, { Grade56InvestmentChoice } from "../materials/lesson/Grade56Activities";
 
 type StudentLessonProps = {
   token: string;
@@ -33,6 +34,7 @@ export default function StudentLesson({ token, nickname, lesson }: StudentLesson
   const quiz = lesson.phase === "active" && lesson.gradeBand === "1-2" ? quizAnswers[lesson.sourceSlide] : undefined;
   const isRabbitQuestion = lesson.gradeBand === "1-2" && lesson.sourceSlide === 4;
   const isGrade34Activity = lesson.phase === "active" && lesson.gradeBand === "3-4" && [3, 8, 9, 26].includes(lesson.sourceSlide);
+  const isGrade56Activity = lesson.phase === "active" && lesson.gradeBand === "5-6" && [9, 10, 16, 19, 23, 24].includes(lesson.sourceSlide);
 
   useEffect(() => {
     setFeedback(null);
@@ -77,6 +79,8 @@ export default function StudentLesson({ token, nickname, lesson }: StudentLesson
       <div className="student-lesson-stage">
         {lesson.gradeBand === "3-4" && lesson.sourceSlide === 9 ? (
           <Grade34UnitPriceSlide revealed={unitPriceRevealed} />
+        ) : lesson.gradeBand === "5-6" && [23, 24].includes(lesson.sourceSlide) ? (
+          <Grade56InvestmentChoice key={lesson.sourceSlide} />
         ) : (
           <img
             src={`/lesson-slides/grade-${lesson.gradeBand}/slide-${lesson.sourceSlide}.png`}
@@ -88,11 +92,14 @@ export default function StudentLesson({ token, nickname, lesson }: StudentLesson
         {lesson.gradeBand === "3-4" && lesson.sourceSlide === 26 && (
           <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
         )}
-        <span className="student-lesson-page">{lesson.page}쪽</span>
+        {!(lesson.gradeBand === "5-6" && [23, 24].includes(lesson.sourceSlide)) && <span className="student-lesson-page">{lesson.page}쪽</span>}
       </div>
 
       {isGrade34Activity && (
         <Grade34Activities sourceSlide={lesson.sourceSlide} token={token} onUnitPriceReveal={setUnitPriceRevealed} />
+      )}
+      {lesson.phase === "active" && lesson.gradeBand === "5-6" && [9, 10, 16, 19].includes(lesson.sourceSlide) && (
+        <Grade56Activities key={lesson.sourceSlide} sourceSlide={lesson.sourceSlide} />
       )}
 
       {quiz ? (
@@ -114,7 +121,7 @@ export default function StudentLesson({ token, nickname, lesson }: StudentLesson
           </div>
           {feedback && <p className={`lesson-feedback ${feedback.correct ? "correct" : "wrong"}`} role="status">{feedback.message}</p>}
         </section>
-      ) : !isGrade34Activity ? (
+      ) : !isGrade34Activity && !isGrade56Activity ? (
         <p className="student-following-note"><i /> 선생님의 설명을 들으며 화면을 함께 보세요.</p>
       ) : null}
     </section>
