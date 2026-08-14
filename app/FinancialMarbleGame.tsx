@@ -125,6 +125,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   const [moving, setMoving] = useState(false);
   const [bonusRoll, setBonusRoll] = useState(false);
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  const [landedCell, setLandedCell] = useState<BoardCell | null>(null);
   const [finished, setFinished] = useState(false);
   const [winnerId, setWinnerId] = useState<number | null>(null);
   const [history, setHistory] = useState<string[]>(["금융마블을 시작했어요. 시작 자산은 100만 원이에요."]);
@@ -173,6 +174,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
 
   function finishLanding(extraRoll = false) {
     setDialog(null);
+    setLandedCell(null);
     setRolling(false);
     setShowingResult(false);
     setMoving(false);
@@ -293,6 +295,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
               return;
             }
           }
+          setLandedCell(cells[next]);
           resolveCell(next + 1);
         }, value * 180 + 160);
       }, 1250);
@@ -327,6 +330,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   function travelTo(index: number) {
     updateActivePlayer((player) => ({ ...player, position: index }));
     setDialog(null);
+    setLandedCell(cells[index]);
     resolveCell(index + 1);
   }
 
@@ -376,7 +380,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
             const cellPlayers = players.filter((player) => player.position === index);
             return (
             <article key={cell.number} className={`financial-cell ${cell.kind} ${cellPlayers.some((player) => player.id === activePlayer.id) ? "active" : ""}`} style={boardPosition(index)}>
-              <small>{cell.number}</small><span>{cell.icon}</span><b>{cell.title}</b><em>{cell.detail}</em>
+              <small>{cell.number}</small><span>{cell.icon}</span><b>{cell.title}</b>
               {cellPlayers.length > 0 && <div className="financial-cell-tokens">{cellPlayers.map((player) => <i key={player.id} aria-label={`${player.name} 말`} style={{ background: player.color }}>{player.id}</i>)}</div>}
             </article>
           )})}
@@ -404,6 +408,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       <aside className="financial-history"><strong>최근 금융 기록</strong>{history.map((item, index) => <p key={`${item}-${index}`}>{item}</p>)}</aside>
 
       {dialog && <div className="financial-dialog-backdrop"><div className="financial-dialog" role="dialog" aria-modal="true">
+        {landedCell && <div className="financial-arrival"><span>도착!</span><strong>{landedCell.icon} {landedCell.number}번 칸 · {landedCell.title}</strong></div>}
         {dialog.type === "message" && <><span className={dialog.amount && dialog.amount < 0 ? "loss" : "gain"}>{dialog.amount ? moneyText(dialog.amount) : "금융 이벤트"}</span><h4>{dialog.title}</h4><p>{dialog.copy}</p>{bonusRoll && <strong className="financial-double-notice">🎲 더블! 한 번 더 굴려요</strong>}<button type="button" onClick={() => finishLanding(dialog.extraRoll)}>{dialog.extraRoll || bonusRoll ? "한 번 더 굴리기" : "확인"}</button></>}
         {dialog.type === "quiz" && <><span>경제 퀴즈</span><h4>{dialog.title}</h4><p>{dialog.quiz.question}</p><div className="financial-dialog-options">{dialog.quiz.options.map((option, index) => <button type="button" key={option} onClick={() => answerQuiz(index)}>{index + 1}. {option}</button>)}</div></>}
         {dialog.type === "lotto" && <><span>운명의 선택</span><h4>로또 번호를 골라 보세요</h4><p>결과를 보기 전에는 어느 쪽이 당첨인지 알 수 없어요.</p><div className="financial-dialog-options two"><button type="button" onClick={() => chooseLotto(1)}>🍀 1번 선택</button><button type="button" onClick={() => chooseLotto(2)}>🍀 2번 선택</button></div></>}
