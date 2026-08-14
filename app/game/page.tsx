@@ -146,7 +146,7 @@ export default function GameWindow() {
         <button type="button" onClick={() => window.close()}>창 닫기</button>
       </header>
 
-      <section className="game-shell game-window-shell">
+      <section className={`game-shell game-window-shell ${player?.gradeBand === "5-6" && lessonState?.phase === "completed" ? "marble-window-shell" : ""}`}>
         {player ? (
           <>
             {!lessonState ? (

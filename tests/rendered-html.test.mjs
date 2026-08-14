@@ -245,17 +245,23 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
   assert.match(studentLesson, /\/api\/classroom\/lesson-response/);
 });
 
-test("grade 5-6 game is a 32-cell financial marble board", async () => {
-  const [financialMarble, gradeGame, home] = await Promise.all([
+test("grade 5-6 game is a responsive multiplayer financial marble board", async () => {
+  const [financialMarble, gradeGame, home, styles] = await Promise.all([
     readFile(new URL("../app/FinancialMarbleGame.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GradeGame.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.match(financialMarble, /금융마블/);
   assert.match(financialMarble, /GOAL_LAPS = 2/);
   assert.match(financialMarble, /number: 32/);
   assert.match(financialMarble, /다음 지출 ×2/);
   assert.match(financialMarble, /원하는 칸으로 이동/);
+  assert.match(financialMarble, /\[2, 3, 4, 5, 6\]/);
+  assert.match(financialMarble, /activePlayerIndex/);
+  assert.match(financialMarble, /주사위 굴리는 중/);
+  assert.match(styles, /100dvh - 260px/);
+  assert.match(styles, /financial-cell-tokens/);
   assert.match(gradeGame, /band === "5-6"/);
   assert.match(gradeGame, /FinancialMarbleGame/);
   assert.match(home, /title: "금융마블"/);
