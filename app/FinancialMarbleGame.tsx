@@ -98,7 +98,9 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   const [started, setStarted] = useState(false);
   const [turn, setTurn] = useState(1);
   const [dice, setDice] = useState<number | null>(null);
+  const [diceTwo, setDiceTwo] = useState<number | null>(null);
   const [rolling, setRolling] = useState(false);
+  const [bonusRoll, setBonusRoll] = useState(false);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [finished, setFinished] = useState(false);
   const [winnerId, setWinnerId] = useState<number | null>(null);
@@ -148,7 +150,9 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   function finishLanding(extraRoll = false) {
     setDialog(null);
     setRolling(false);
-    if (!extraRoll) {
+    const rollAgain = extraRoll || bonusRoll;
+    setBonusRoll(false);
+    if (!rollAgain) {
       setTurn((value) => value + 1);
       setActivePlayerIndex((value) => (value + 1) % players.length);
     }
@@ -215,36 +219,51 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       return;
     }
     setRolling(true);
-    const value = Math.floor(Math.random() * 6) + 1;
+    const firstValue = Math.floor(Math.random() * 6) + 1;
+    const secondValue = Math.floor(Math.random() * 6) + 1;
+    const value = firstValue + secondValue;
+    const isDouble = firstValue === secondValue;
     let animationStep = 0;
     const animation = window.setInterval(() => {
       setDice((animationStep++ % 6) + 1);
+      setDiceTwo(((animationStep + 2) % 6) + 1);
     }, 85);
     window.setTimeout(() => {
       window.clearInterval(animation);
-      setDice(value);
+      setDice(firstValue);
+      setDiceTwo(secondValue);
+      setBonusRoll(isDouble);
       const raw = activePlayer.position + value;
       const passedStart = raw >= cells.length;
       const next = raw % cells.length;
       const nextLaps = activePlayer.laps + (passedStart ? 1 : 0);
       const salary = passedStart ? 20 + (activePlayer.startup ? 5 : 0) : 0;
-      setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? {
-        ...player,
-        position: next,
-        laps: nextLaps,
-        cash: Math.round((player.cash + salary) * 10) / 10,
-      } : player));
-      if (passedStart) {
-        addHistory(`${activePlayer.name} · ${activePlayer.startup ? "월급과 창업 수익" : "월급"} ${moneyText(salary)}`);
-        if (nextLaps >= GOAL_LAPS) {
-          setFinished(true);
-          setWinnerId(activePlayer.id);
-          setRolling(false);
-          addHistory(`${activePlayer.name}이(가) 두 바퀴를 완주했어요!`);
-          return;
-        }
+      if (isDouble) addHistory(`${activePlayer.name} · 더블! 한 번 더 굴릴 수 있어요.`);
+      for (let step = 1; step <= value; step += 1) {
+        window.setTimeout(() => {
+          const stepPosition = (activePlayer.position + step) % cells.length;
+          setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? { ...player, position: stepPosition } : player));
+        }, step * 145);
       }
-      resolveCell(next + 1);
+      window.setTimeout(() => {
+        setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? {
+          ...player,
+          position: next,
+          laps: nextLaps,
+          cash: Math.round((player.cash + salary) * 10) / 10,
+        } : player));
+        if (passedStart) {
+          addHistory(`${activePlayer.name} · ${activePlayer.startup ? "월급과 창업 수익" : "월급"} ${moneyText(salary)}`);
+          if (nextLaps >= GOAL_LAPS) {
+            setFinished(true);
+            setWinnerId(activePlayer.id);
+            setRolling(false);
+            addHistory(`${activePlayer.name}이(가) 두 바퀴를 완주했어요!`);
+            return;
+          }
+        }
+        resolveCell(next + 1);
+      }, value * 145 + 120);
     }, 850);
   }
 
@@ -333,8 +352,8 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
             <span className="financial-center-logo">₩</span><h4>금융마블</h4>
             <p>{activeCell.icon} 현재 <b>{activeCell.number}. {activeCell.title}</b></p>
             <button type="button" className={rolling ? "rolling" : ""} onClick={rollDice} disabled={disabled || rolling || Boolean(dialog)}>
-              <span>{dice ? diceFaces[dice - 1] : "🎲"}</span>
-              <b>{rolling ? "주사위 굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : "주사위 굴리기"}</b>
+              <span className="financial-dice-pair"><i>{dice ? diceFaces[dice - 1] : "⚄"}</i><i>{diceTwo ? diceFaces[diceTwo - 1] : "⚂"}</i></span>
+              <b>{rolling ? "주사위 굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : dice && diceTwo ? `합계 ${dice + diceTwo} · 다시 굴리기` : "두 주사위 굴리기"}</b>
             </button>
             <div className="financial-effects"><span className={activePlayer.expenseMultiplier !== 1 ? "on" : ""}>다음 지출 ×{activePlayer.expenseMultiplier}</span><span className={activePlayer.startup ? "on" : ""}>창업 수익 {activePlayer.startup ? "+5" : "없음"}</span></div>
           </div>
@@ -346,13 +365,13 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       </div>
       <div className="financial-mobile-control">
         <p>{activeCell.icon} 현재 <b>{activeCell.number}. {activeCell.title}</b></p>
-        <button type="button" onClick={rollDice} disabled={disabled || rolling || Boolean(dialog)}><span>{dice ? diceFaces[dice - 1] : "🎲"}</span>{rolling ? "굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : "주사위 굴리기"}</button>
+        <button type="button" className={rolling ? "rolling" : ""} onClick={rollDice} disabled={disabled || rolling || Boolean(dialog)}><span className="financial-dice-pair"><i>{dice ? diceFaces[dice - 1] : "⚄"}</i><i>{diceTwo ? diceFaces[diceTwo - 1] : "⚂"}</i></span>{rolling ? "굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : "두 주사위 굴리기"}</button>
       </div>
 
       <aside className="financial-history"><strong>최근 금융 기록</strong>{history.map((item, index) => <p key={`${item}-${index}`}>{item}</p>)}</aside>
 
       {dialog && <div className="financial-dialog-backdrop"><div className="financial-dialog" role="dialog" aria-modal="true">
-        {dialog.type === "message" && <><span className={dialog.amount && dialog.amount < 0 ? "loss" : "gain"}>{dialog.amount ? moneyText(dialog.amount) : "금융 이벤트"}</span><h4>{dialog.title}</h4><p>{dialog.copy}</p><button type="button" onClick={() => finishLanding(dialog.extraRoll)}>{dialog.extraRoll ? "한 번 더 굴리기" : "확인"}</button></>}
+        {dialog.type === "message" && <><span className={dialog.amount && dialog.amount < 0 ? "loss" : "gain"}>{dialog.amount ? moneyText(dialog.amount) : "금융 이벤트"}</span><h4>{dialog.title}</h4><p>{dialog.copy}</p>{bonusRoll && <strong className="financial-double-notice">🎲 더블! 한 번 더 굴려요</strong>}<button type="button" onClick={() => finishLanding(dialog.extraRoll)}>{dialog.extraRoll || bonusRoll ? "한 번 더 굴리기" : "확인"}</button></>}
         {dialog.type === "quiz" && <><span>경제 퀴즈</span><h4>{dialog.title}</h4><p>{dialog.quiz.question}</p><div className="financial-dialog-options">{dialog.quiz.options.map((option, index) => <button type="button" key={option} onClick={() => answerQuiz(index)}>{index + 1}. {option}</button>)}</div></>}
         {dialog.type === "lotto" && <><span>운명의 선택</span><h4>로또 번호를 골라 보세요</h4><p>결과를 보기 전에는 어느 쪽이 당첨인지 알 수 없어요.</p><div className="financial-dialog-options two"><button type="button" onClick={() => chooseLotto(1)}>🍀 1번 선택</button><button type="button" onClick={() => chooseLotto(2)}>🍀 2번 선택</button></div></>}
         {dialog.type === "inflation" && <><span>수요 증가 카드</span><h4>다음 지출이 두 배!</h4><p>퀴즈에 도전해 물가 상승 카드를 없던 일로 만들 수 있어요.</p><div className="financial-dialog-options two"><button type="button" onClick={() => chooseInflation(true)}>퀴즈로 막기</button><button type="button" onClick={() => chooseInflation(false)}>그대로 적용</button></div></>}
