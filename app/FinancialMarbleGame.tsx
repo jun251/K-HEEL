@@ -28,7 +28,14 @@ type MarblePlayer = {
 const START_CASH = 100;
 const GOAL_LAPS = 2;
 const playerColors = ["#ef5b4c", "#2788e8", "#18a66f", "#9b5de5", "#f29f05", "#e5489b"];
-const diceFaces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+const pipMap: Record<number, Array<[number, number]>> = {
+  1: [[2, 2]],
+  2: [[1, 1], [3, 3]],
+  3: [[1, 1], [2, 2], [3, 3]],
+  4: [[1, 1], [3, 1], [1, 3], [3, 3]],
+  5: [[1, 1], [3, 1], [2, 2], [1, 3], [3, 3]],
+  6: [[1, 1], [3, 1], [1, 2], [3, 2], [1, 3], [3, 3]],
+};
 
 const cells: BoardCell[] = [
   { number: 1, icon: "🏁", title: "출발", detail: "월급 +20만 원", kind: "start" },
@@ -89,6 +96,20 @@ function boardPosition(index: number) {
 function moneyText(amount: number) {
   const rounded = Math.round(amount * 10) / 10;
   return `${rounded >= 0 ? "+" : ""}${rounded.toLocaleString()}만 원`;
+}
+
+function DiceCube({ value, rolling, second = false }: { value: number; rolling: boolean; second?: boolean }) {
+  return (
+    <span className="dice-cube-scene" aria-label={`주사위 ${value}`}>
+      <span className={`dice-cube show-${value} ${rolling ? "is-rolling" : ""} ${second ? "second" : ""}`}>
+        {[1, 2, 3, 4, 5, 6].map((face) => (
+          <span className={`dice-cube-face face-${face}`} key={face}>
+            {pipMap[face].map(([column, row], index) => <i key={index} style={{ gridColumn: column, gridRow: row }} />)}
+          </span>
+        ))}
+      </span>
+    </span>
+  );
 }
 
 export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: (outcome: GameOutcome) => void; disabled: boolean }) {
@@ -352,7 +373,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
             <span className="financial-center-logo">₩</span><h4>금융마블</h4>
             <p>{activeCell.icon} 현재 <b>{activeCell.number}. {activeCell.title}</b></p>
             <button type="button" className={rolling ? "rolling" : ""} onClick={rollDice} disabled={disabled || rolling || Boolean(dialog)}>
-              <span className="financial-dice-pair"><i>{dice ? diceFaces[dice - 1] : "⚄"}</i><i>{diceTwo ? diceFaces[diceTwo - 1] : "⚂"}</i></span>
+              <span className="financial-dice-pair"><DiceCube value={dice ?? 5} rolling={rolling} /><DiceCube value={diceTwo ?? 3} rolling={rolling} second /></span>
               <b>{rolling ? "주사위 굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : dice && diceTwo ? `합계 ${dice + diceTwo} · 다시 굴리기` : "두 주사위 굴리기"}</b>
             </button>
             <div className="financial-effects"><span className={activePlayer.expenseMultiplier !== 1 ? "on" : ""}>다음 지출 ×{activePlayer.expenseMultiplier}</span><span className={activePlayer.startup ? "on" : ""}>창업 수익 {activePlayer.startup ? "+5" : "없음"}</span></div>
@@ -365,7 +386,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       </div>
       <div className="financial-mobile-control">
         <p>{activeCell.icon} 현재 <b>{activeCell.number}. {activeCell.title}</b></p>
-        <button type="button" className={rolling ? "rolling" : ""} onClick={rollDice} disabled={disabled || rolling || Boolean(dialog)}><span className="financial-dice-pair"><i>{dice ? diceFaces[dice - 1] : "⚄"}</i><i>{diceTwo ? diceFaces[diceTwo - 1] : "⚂"}</i></span>{rolling ? "굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : "두 주사위 굴리기"}</button>
+        <button type="button" className={rolling ? "rolling" : ""} onClick={rollDice} disabled={disabled || rolling || Boolean(dialog)}><span className="financial-dice-pair"><DiceCube value={dice ?? 5} rolling={rolling} /><DiceCube value={diceTwo ?? 3} rolling={rolling} second /></span>{rolling ? "굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : "두 주사위 굴리기"}</button>
       </div>
 
       <aside className="financial-history"><strong>최근 금융 기록</strong>{history.map((item, index) => <p key={`${item}-${index}`}>{item}</p>)}</aside>

@@ -265,7 +265,9 @@ test("grade 5-6 game is a responsive multiplayer financial marble board", async 
   assert.match(financialMarble, /step \* 145/);
   assert.match(styles, /100dvh - 260px/);
   assert.match(styles, /financial-cell-tokens/);
-  assert.match(styles, /dice-roll-a/);
+  assert.match(financialMarble, /function DiceCube/);
+  assert.match(styles, /transform-style:preserve-3d/);
+  assert.match(styles, /dice-cube-tumble/);
   assert.match(gradeGame, /band === "5-6"/);
   assert.match(gradeGame, /FinancialMarbleGame/);
   assert.match(home, /title: "금융마블"/);
