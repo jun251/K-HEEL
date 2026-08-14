@@ -5,7 +5,7 @@ import test from "node:test";
 test("student entry only asks for the assigned code", async () => {
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 
-  assert.match(page, /<label>학생 코드<input/);
+  assert.match(page, /<label>학생 코드 또는 테스트 코드<input/);
   assert.match(page, /body:\s*JSON\.stringify\(\{\s*code:\s*studentCode\s*\}\)/);
   assert.doesNotMatch(page, /<label>닉네임<input/);
   assert.doesNotMatch(page, /<legend>나의 학년군<\/legend>/);
@@ -48,6 +48,21 @@ test("student game opens without teacher approval and still follows pause or end
   assert.match(gamePage, /ClassroomOverlay/);
   assert.match(scoresRoute, /control\?\.state === "paused" \|\| control\?\.state === "ended"/);
   assert.doesNotMatch(scoresRoute, /control\?\.state !== "active"/);
+});
+
+test("fixed test codes open each grade game without classroom data", async () => {
+  const [joinRoute, home, game] = await Promise.all([
+    readFile(new URL("../app/api/join/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/game/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(joinRoute, /TEST12: "1-2"/);
+  assert.match(joinRoute, /TEST34: "3-4"/);
+  assert.match(joinRoute, /TEST56: "5-6"/);
+  assert.match(joinRoute, /demo: true/);
+  assert.match(home, /5·6학년 TEST56/);
+  assert.match(game, /if \(player\.demo\)/);
+  assert.match(game, /테스트 결과는 결과판에 저장되지 않아요/);
 });
 
 test("Netlify functions never import the Cloudflare runtime", async () => {

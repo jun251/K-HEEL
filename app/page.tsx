@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import GradeGame, { GameOutcome } from "./GradeGame";
 
 type GradeBand = "1-2" | "3-4" | "5-6";
-type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand };
+type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand; demo?: boolean };
 type Result = { rank: number; nickname: string; gradeBand: GradeBand; score: number; remainingBudget?: number };
 
 const gradeInfo: Record<GradeBand, { label: string; title: string; copy: string; color: string }> = {
@@ -268,8 +268,13 @@ export default function Home() {
 
         <form className="join-card" onSubmit={joinRoom}>
           <div className="card-label">지금 바로 참여하기</div>
-          <label>학생 코드<input value={studentCode} onChange={(e) => setStudentCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20))} placeholder="선생님이 알려준 코드" autoComplete="off" aria-describedby="code-help" /></label>
-          <small id="code-help">코드를 입력하면 이름과 학년을 자동으로 확인해요.</small>
+          <label>학생 코드 또는 테스트 코드<input value={studentCode} onChange={(e) => setStudentCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20))} placeholder="학생 코드 · 예: TEST56" autoComplete="off" aria-describedby="code-help" /></label>
+          <small id="code-help">학생 코드는 이름과 학년을 자동 확인하고, 테스트 코드는 수업 없이 게임으로 바로 이동해요.</small>
+          <div className="test-code-buttons" aria-label="게임 테스트 코드">
+            <button type="button" onClick={() => setStudentCode("TEST12")}>1·2학년 TEST12</button>
+            <button type="button" onClick={() => setStudentCode("TEST34")}>3·4학년 TEST34</button>
+            <button type="button" onClick={() => setStudentCode("TEST56")}>5·6학년 TEST56</button>
+          </div>
           <button className="primary-button" disabled={loading}>{loading ? "잠시만요…" : "게임방 입장하기 →"}</button>
           {status && <p className="form-status" role="status">{status}</p>}
         </form>

@@ -5,7 +5,7 @@ import GradeGame, { GameOutcome } from "../GradeGame";
 import StudentLesson from "./StudentLesson";
 
 type GradeBand = "1-2" | "3-4" | "5-6";
-type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand };
+type Player = { token: string; nickname: string; roomCode: string; gradeBand: GradeBand; demo?: boolean };
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
 type BlockingClassroomState = Extract<ClassroomState, "paused" | "ended">;
 type LessonState = {
@@ -61,6 +61,11 @@ export default function GameWindow() {
 
   useEffect(() => {
     if (!player) return;
+    if (player.demo) {
+      setClassroomState("active");
+      setLessonState({ phase: "completed", active: false, gradeBand: player.gradeBand, page: 1, sourceSlide: 1 });
+      return;
+    }
     let disposed = false;
 
     const loadClassroomState = async () => {
@@ -107,6 +112,11 @@ export default function GameWindow() {
 
   const finishGame = async ({ score, remainingBudget }: GameOutcome) => {
     if (!player) return;
+    if (player.demo) {
+      completed.current = true;
+      setStatus(`테스트 완료! 최종 점수는 ${score}점이에요. 테스트 결과는 결과판에 저장되지 않아요.`);
+      return;
+    }
     setLoading(true);
     setStatus("");
     try {
@@ -149,7 +159,7 @@ export default function GameWindow() {
             ) : (
               <>
                 <div className="game-heading">
-                  <span>{gradeInfo[player.gradeBand].label} 미션</span>
+                  <span>{player.demo ? "테스트 모드 · " : ""}{gradeInfo[player.gradeBand].label} 미션</span>
                   <h2>{player.nickname}님, {gradeInfo[player.gradeBand].title}</h2>
                   <p>정답보다 더 중요한 건 왜 그렇게 선택했는지 생각하는 거예요.</p>
                 </div>

@@ -2,6 +2,11 @@ import { ensureGameSchema } from "../../../db/runtime";
 import { hashSecret } from "../../access";
 
 const gradeBands = new Set(["1-2", "3-4", "5-6"]);
+const testCodes = {
+  TEST12: "1-2",
+  TEST34: "3-4",
+  TEST56: "5-6",
+} as const;
 
 export async function POST(request: Request) {
   try {
@@ -9,6 +14,17 @@ export async function POST(request: Request) {
     const code = payload.code?.trim().toUpperCase() ?? "";
     if (!/^[A-Z0-9-]{4,20}$/.test(code)) {
       return Response.json({ error: "학생 코드를 정확히 입력해 주세요." }, { status: 400 });
+    }
+
+    const testGrade = testCodes[code as keyof typeof testCodes];
+    if (testGrade) {
+      return Response.json({
+        token: `demo-${testGrade}-${crypto.randomUUID()}`,
+        roomCode: "DEMO",
+        nickname: "테스트 플레이어",
+        gradeBand: testGrade,
+        demo: true,
+      });
     }
 
     const db = await ensureGameSchema();
