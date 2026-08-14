@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import FinancialMarbleGame from "./FinancialMarbleGame";
 
 export type GradeBand = "1-2" | "3-4" | "5-6";
 export type GameOutcome = { score: number; remainingBudget: number };
@@ -240,6 +241,9 @@ export default function GradeGame({
   if (band === "3-4") {
     return <RationalConsumerGame onFinish={onFinish} disabled={disabled} />;
   }
+  if (band === "5-6") {
+    return <FinancialMarbleGame onFinish={onFinish} disabled={disabled} />;
+  }
   return <SimpleGradeGame band={band} onFinish={onFinish} disabled={disabled} />;
 }
 
@@ -431,35 +435,25 @@ function SimpleGradeGame({
   onFinish,
   disabled,
 }: {
-  band: Exclude<GradeBand, "3-4">;
+  band: "1-2";
   onFinish: (outcome: GameOutcome) => void;
   disabled: boolean;
 }) {
   const [choices, setChoices] = useState<number[]>([]);
   const [done, setDone] = useState(false);
-  const options = band === "1-2"
-    ? [
-      { name: "아플 때 먹는 약", value: 20 },
-      { name: "새로 나온 장난감", value: 0 },
-      { name: "학교 갈 버스비", value: 20 },
-      { name: "유행하는 스티커", value: 0 },
-      { name: "점심 식사", value: 20 },
-    ]
-    : [
-      { name: "바로 오늘 쓰기", value: 20 },
-      { name: "절반 저축하기", value: 30 },
-      { name: "목표를 정해 저축하기", value: 50 },
-    ];
-  const score = band === "1-2"
-    ? choices.reduce((sum, index) => sum + options[index].value, 40)
-    : choices.length ? options[choices[0]].value + 50 : 0;
+  const options = [
+    { name: "아플 때 먹는 약", value: 20 },
+    { name: "새로 나온 장난감", value: 0 },
+    { name: "학교 갈 버스비", value: 20 },
+    { name: "유행하는 스티커", value: 0 },
+    { name: "점심 식사", value: 20 },
+  ];
+  const score = choices.reduce((sum, index) => sum + options[index].value, 40);
   const toggle = (index: number) => {
     setChoices((current) =>
-      band === "5-6"
-        ? [index]
-        : current.includes(index)
-          ? current.filter((item) => item !== index)
-          : [...current, index],
+      current.includes(index)
+        ? current.filter((item) => item !== index)
+        : [...current, index],
     );
   };
 
@@ -478,7 +472,7 @@ function SimpleGradeGame({
   return (
     <div className="mission">
       <div className="mission-question">
-        <b>{band === "1-2" ? "꼭 필요한 것만 골라 보세요" : "용돈 10,000원이 생겼어요. 어떻게 할까요?"}</b>
+        <b>꼭 필요한 것만 골라 보세요</b>
       </div>
       <div className="choice-grid">
         {options.map((option, index) => (

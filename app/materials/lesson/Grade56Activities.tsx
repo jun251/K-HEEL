@@ -72,14 +72,25 @@ function SequentialQuiz({
   title,
   questions,
   choices,
+  autoAdvance = false,
 }: {
   title: string;
   questions: readonly { question: string; answer: string }[];
   choices: readonly string[];
+  autoAdvance?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const question = questions[index];
+
+  useEffect(() => {
+    if (!autoAdvance || !feedback?.correct || index >= questions.length - 1) return;
+    const timer = window.setTimeout(() => {
+      setIndex((value) => value + 1);
+      setFeedback(null);
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [autoAdvance, feedback, index, questions.length]);
 
   function choose(answer: string) {
     const correct = answer === question.answer;
@@ -91,10 +102,10 @@ function SequentialQuiz({
       <p className="lesson-quiz-progress">문제 {index + 1} / {questions.length}</p>
       <h3>{question.question}</h3>
       <div className={`grade56-quiz-choices ${choices.length === 2 && choices[0].length === 1 ? "ox" : ""}`}>
-        {choices.map((choice) => <button type="button" key={choice} onClick={() => choose(choice)}>{choice}</button>)}
+        {choices.map((choice) => <button type="button" key={choice} disabled={Boolean(autoAdvance && feedback?.correct)} onClick={() => choose(choice)}>{choice}</button>)}
       </div>
       {feedback && <p className={`lesson-feedback ${feedback.correct ? "correct" : "wrong"}`}>{feedback.message}</p>}
-      {feedback?.correct && index < questions.length - 1 && (
+      {feedback?.correct && !autoAdvance && index < questions.length - 1 && (
         <button type="button" className="lesson-next-question" onClick={() => { setIndex((value) => value + 1); setFeedback(null); }}>다음 문제</button>
       )}
       {feedback?.correct && index === questions.length - 1 && <p className="lesson-feedback correct">모든 문제를 풀었어요!</p>}
@@ -156,7 +167,7 @@ export default function Grade56Activities({ sourceSlide }: { sourceSlide: number
   }
 
   if (sourceSlide === 10) return <SequentialQuiz title="금융 안전 OX 퀴즈" questions={safetyQuestions} choices={["O", "X"]} />;
-  if (sourceSlide === 16) return <SequentialQuiz title="가격 변화 상황 퀴즈" questions={priceQuestions} choices={["가격이 올라간다", "가격이 내려간다"]} />;
+  if (sourceSlide === 16) return <SequentialQuiz title="가격 변화 상황 퀴즈" questions={priceQuestions} choices={["가격이 올라간다", "가격이 내려간다"]} autoAdvance />;
   if (sourceSlide === 19) return <SequentialQuiz title="합리적 소비 OX 퀴즈" questions={consumptionQuestions} choices={["O", "X"]} />;
   return null;
 }

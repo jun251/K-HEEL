@@ -229,3 +229,17 @@ test("teacher-led lessons synchronize student pages and report quiz participatio
   assert.match(studentLesson, /선생님이 페이지를 넘기면 이 화면도 자동으로 넘어갑니다/);
   assert.match(studentLesson, /\/api\/classroom\/lesson-response/);
 });
+
+test("grade 5-6 game is a 32-cell financial marble board", async () => {
+  const [financialMarble, gradeGame] = await Promise.all([
+    readFile(new URL("../app/FinancialMarbleGame.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/GradeGame.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(financialMarble, /금융마블/);
+  assert.match(financialMarble, /GOAL_LAPS = 2/);
+  assert.match(financialMarble, /number: 32/);
+  assert.match(financialMarble, /다음 지출 ×2/);
+  assert.match(financialMarble, /원하는 칸으로 이동/);
+  assert.match(gradeGame, /band === "5-6"/);
+  assert.match(gradeGame, /FinancialMarbleGame/);
+});
