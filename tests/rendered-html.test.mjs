@@ -253,7 +253,7 @@ test("grade 5-6 game is a responsive multiplayer financial marble board", async 
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.match(financialMarble, /금융마블/);
-  assert.match(financialMarble, /GOAL_LAPS = 2/);
+  assert.match(financialMarble, /MAX_TURNS = 4/);
   assert.match(financialMarble, /number: 32/);
   assert.match(financialMarble, /다음 지출 ×2/);
   assert.match(financialMarble, /원하는 칸으로 이동/);
@@ -263,7 +263,9 @@ test("grade 5-6 game is a responsive multiplayer financial marble board", async 
   assert.match(financialMarble, /firstValue \+ secondValue/);
   assert.match(financialMarble, /더블! 한 번 더 굴릴 수 있어요/);
   assert.match(financialMarble, /setShowingResult\(true\)/);
-  assert.match(financialMarble, /step \* 180/);
+  assert.match(financialMarble, /step \* 300/);
+  assert.match(financialMarble, /updatedPlayers\.every\(\(player\) => player\.turnsUsed >= MAX_TURNS\)/);
+  assert.match(financialMarble, /모든 플레이어가 \$\{MAX_TURNS\}턴을 마쳤어요/);
   assert.match(financialMarble, /1250/);
   assert.match(financialMarble, /잠시 후 말이 이동해요/);
   assert.doesNotMatch(financialMarble, /<em>\{cell\.detail\}<\/em>/);

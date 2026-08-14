@@ -23,10 +23,11 @@ type MarblePlayer = {
   expenseMultiplier: number;
   startup: boolean;
   skipTurns: number;
+  turnsUsed: number;
 };
 
 const START_CASH = 100;
-const GOAL_LAPS = 2;
+const MAX_TURNS = 4;
 const playerColors = ["#ef5b4c", "#2788e8", "#18a66f", "#9b5de5", "#f29f05", "#e5489b"];
 const pipMap: Record<number, Array<[number, number]>> = {
   1: [[2, 2]],
@@ -133,7 +134,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   const activePlayer = players[activePlayerIndex];
   const activeCell = cells[activePlayer?.position ?? 0];
   const rollTotal = dice && diceTwo ? dice + diceTwo : null;
-  const progress = useMemo(() => Math.min(100, ((activePlayer?.laps ?? 0) / GOAL_LAPS) * 100), [activePlayer?.laps]);
+  const progress = useMemo(() => Math.min(100, ((activePlayer?.turnsUsed ?? 0) / MAX_TURNS) * 100), [activePlayer?.turnsUsed]);
 
   function startGame() {
     setPlayers(Array.from({ length: playerCount }, (_, index) => ({
@@ -146,6 +147,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       expenseMultiplier: 1,
       startup: false,
       skipTurns: 0,
+      turnsUsed: 0,
     })));
     setStarted(true);
     setHistory([`${playerCount}명이 금융마블을 시작했어요. 각자 시작 자산은 100만 원이에요.`]);
@@ -181,7 +183,16 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
     const rollAgain = extraRoll || bonusRoll;
     setBonusRoll(false);
     if (!rollAgain) {
+      const updatedPlayers = players.map((player, index) => index === activePlayerIndex ? { ...player, turnsUsed: player.turnsUsed + 1 } : player);
+      setPlayers(updatedPlayers);
       setTurn((value) => value + 1);
+      if (updatedPlayers.every((player) => player.turnsUsed >= MAX_TURNS)) {
+        const richest = updatedPlayers.reduce((best, player) => player.cash > best.cash ? player : best);
+        setWinnerId(richest.id);
+        setFinished(true);
+        addHistory(`모든 플레이어가 ${MAX_TURNS}턴을 마쳤어요.`);
+        return;
+      }
       setActivePlayerIndex((value) => (value + 1) % players.length);
     }
   }
@@ -276,7 +287,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
           window.setTimeout(() => {
             const stepPosition = (activePlayer.position + step) % cells.length;
             setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? { ...player, position: stepPosition } : player));
-          }, step * 180);
+          }, step * 300);
         }
         window.setTimeout(() => {
           setMoving(false);
@@ -288,16 +299,10 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
           } : player));
           if (passedStart) {
             addHistory(`${activePlayer.name} · ${activePlayer.startup ? "월급과 창업 수익" : "월급"} ${moneyText(salary)}`);
-            if (nextLaps >= GOAL_LAPS) {
-              setFinished(true);
-              setWinnerId(activePlayer.id);
-              addHistory(`${activePlayer.name}이(가) 두 바퀴를 완주했어요!`);
-              return;
-            }
           }
           setLandedCell(cells[next]);
           resolveCell(next + 1);
-        }, value * 180 + 160);
+        }, value * 300 + 180);
       }, 1250);
     }, 850);
   }
@@ -353,8 +358,8 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
     const ranking = [...players].sort((a, b) => b.cash - a.cash);
     return (
       <section className="financial-finish">
-        <span>👑</span><p>FINANCIAL MARBLE COMPLETE</p><h3>{winner.name} 완주!</h3>
-        <strong>{winner.cash.toLocaleString()}만 원</strong><small>완주 플레이어의 최종 자산</small>
+        <span>👑</span><p>FINANCIAL MARBLE COMPLETE</p><h3>{winner.name} 금융왕!</h3>
+        <strong>{winner.cash.toLocaleString()}만 원</strong><small>4턴 종료 후 가장 많은 최종 자산</small>
         <div>{ranking.map((player, index) => <b key={player.id} style={{ borderColor: player.color }}>{index + 1}위 {player.name} · {player.cash.toLocaleString()}만 원</b>)}</div>
         <p>수입과 지출, 저축과 투자, 수요와 공급을 생각하며 자산을 지켰어요.</p>
         <button className="primary-button" disabled={disabled} onClick={() => onFinish({ score: Math.max(0, Math.round(winner.cash)), remainingBudget: Math.round(winner.cash * 10000) })}>결과판에 기록하기</button>
@@ -366,11 +371,11 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
     <section className="financial-marble" aria-label="금융마블 보드게임">
       <header className="financial-marble-header">
         <div><p>5·6학년 경제 보드게임</p><h3>금융마블</h3></div>
-        <div className="financial-stats"><span>현재 차례 <b style={{ color: activePlayer.color }}>{activePlayer.name}</b></span><span>자산 <b>{activePlayer.cash.toLocaleString()}만 원</b></span><span>진행 <b>{activePlayer.laps}/{GOAL_LAPS}바퀴</b></span><span>턴 <b>{turn}</b></span></div>
+        <div className="financial-stats"><span>현재 차례 <b style={{ color: activePlayer.color }}>{activePlayer.name}</b></span><span>자산 <b>{activePlayer.cash.toLocaleString()}만 원</b></span><span>개인 턴 <b>{Math.min(activePlayer.turnsUsed + 1, MAX_TURNS)}/{MAX_TURNS}</b></span><span>전체 차례 <b>{turn}</b></span></div>
       </header>
 
       <div className="financial-player-strip">
-        {players.map((player, index) => <div key={player.id} className={index === activePlayerIndex ? "active" : ""}><i style={{ background: player.color }}>{player.id}</i><span>{player.name}<b>{player.cash.toLocaleString()}만 원</b></span></div>)}
+        {players.map((player, index) => <div key={player.id} className={index === activePlayerIndex ? "active" : ""}><i style={{ background: player.color }}>{player.id}</i><span>{player.name}<b>{player.cash.toLocaleString()}만 원 · {player.turnsUsed}/{MAX_TURNS}턴</b></span></div>)}
       </div>
 
       <div className="financial-progress"><span style={{ width: `${progress}%` }} /></div>
