@@ -262,7 +262,10 @@ test("grade 5-6 game is a responsive multiplayer financial marble board", async 
   assert.match(financialMarble, /주사위 굴리는 중/);
   assert.match(financialMarble, /firstValue \+ secondValue/);
   assert.match(financialMarble, /더블! 한 번 더 굴릴 수 있어요/);
-  assert.match(financialMarble, /step \* 145/);
+  assert.match(financialMarble, /setShowingResult\(true\)/);
+  assert.match(financialMarble, /step \* 180/);
+  assert.match(financialMarble, /1250/);
+  assert.match(financialMarble, /잠시 후 말이 이동해요/);
   assert.match(styles, /100dvh - 260px/);
   assert.match(styles, /financial-cell-tokens/);
   assert.match(financialMarble, /function DiceCube/);

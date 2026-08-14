@@ -121,6 +121,8 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   const [dice, setDice] = useState<number | null>(null);
   const [diceTwo, setDiceTwo] = useState<number | null>(null);
   const [rolling, setRolling] = useState(false);
+  const [showingResult, setShowingResult] = useState(false);
+  const [moving, setMoving] = useState(false);
   const [bonusRoll, setBonusRoll] = useState(false);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [finished, setFinished] = useState(false);
@@ -129,6 +131,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
 
   const activePlayer = players[activePlayerIndex];
   const activeCell = cells[activePlayer?.position ?? 0];
+  const rollTotal = dice && diceTwo ? dice + diceTwo : null;
   const progress = useMemo(() => Math.min(100, ((activePlayer?.laps ?? 0) / GOAL_LAPS) * 100), [activePlayer?.laps]);
 
   function startGame() {
@@ -171,6 +174,8 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   function finishLanding(extraRoll = false) {
     setDialog(null);
     setRolling(false);
+    setShowingResult(false);
+    setMoving(false);
     const rollAgain = extraRoll || bonusRoll;
     setBonusRoll(false);
     if (!rollAgain) {
@@ -232,7 +237,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   }
 
   function rollDice() {
-    if (disabled || rolling || dialog || finished) return;
+    if (disabled || rolling || showingResult || moving || dialog || finished) return;
     if (activePlayer.skipTurns > 0) {
       updateActivePlayer((player) => ({ ...player, skipTurns: 0 }));
       addHistory(`${activePlayer.name} · 무인도에서 한 턴 쉬었어요.`);
@@ -254,37 +259,43 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       setDice(firstValue);
       setDiceTwo(secondValue);
       setBonusRoll(isDouble);
+      setRolling(false);
+      setShowingResult(true);
       const raw = activePlayer.position + value;
       const passedStart = raw >= cells.length;
       const next = raw % cells.length;
       const nextLaps = activePlayer.laps + (passedStart ? 1 : 0);
       const salary = passedStart ? 20 + (activePlayer.startup ? 5 : 0) : 0;
       if (isDouble) addHistory(`${activePlayer.name} · 더블! 한 번 더 굴릴 수 있어요.`);
-      for (let step = 1; step <= value; step += 1) {
-        window.setTimeout(() => {
-          const stepPosition = (activePlayer.position + step) % cells.length;
-          setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? { ...player, position: stepPosition } : player));
-        }, step * 145);
-      }
       window.setTimeout(() => {
-        setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? {
-          ...player,
-          position: next,
-          laps: nextLaps,
-          cash: Math.round((player.cash + salary) * 10) / 10,
-        } : player));
-        if (passedStart) {
-          addHistory(`${activePlayer.name} · ${activePlayer.startup ? "월급과 창업 수익" : "월급"} ${moneyText(salary)}`);
-          if (nextLaps >= GOAL_LAPS) {
-            setFinished(true);
-            setWinnerId(activePlayer.id);
-            setRolling(false);
-            addHistory(`${activePlayer.name}이(가) 두 바퀴를 완주했어요!`);
-            return;
-          }
+        setShowingResult(false);
+        setMoving(true);
+        for (let step = 1; step <= value; step += 1) {
+          window.setTimeout(() => {
+            const stepPosition = (activePlayer.position + step) % cells.length;
+            setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? { ...player, position: stepPosition } : player));
+          }, step * 180);
         }
-        resolveCell(next + 1);
-      }, value * 145 + 120);
+        window.setTimeout(() => {
+          setMoving(false);
+          setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? {
+            ...player,
+            position: next,
+            laps: nextLaps,
+            cash: Math.round((player.cash + salary) * 10) / 10,
+          } : player));
+          if (passedStart) {
+            addHistory(`${activePlayer.name} · ${activePlayer.startup ? "월급과 창업 수익" : "월급"} ${moneyText(salary)}`);
+            if (nextLaps >= GOAL_LAPS) {
+              setFinished(true);
+              setWinnerId(activePlayer.id);
+              addHistory(`${activePlayer.name}이(가) 두 바퀴를 완주했어요!`);
+              return;
+            }
+          }
+          resolveCell(next + 1);
+        }, value * 180 + 160);
+      }, 1250);
     }, 850);
   }
 
@@ -372,10 +383,11 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
           <div className="financial-center">
             <span className="financial-center-logo">₩</span><h4>금융마블</h4>
             <p>{activeCell.icon} 현재 <b>{activeCell.number}. {activeCell.title}</b></p>
-            <button type="button" className={rolling ? "rolling" : ""} onClick={rollDice} disabled={disabled || rolling || Boolean(dialog)}>
+            <button type="button" className={rolling ? "rolling" : showingResult ? "showing-result" : moving ? "moving-piece" : ""} onClick={rollDice} disabled={disabled || rolling || showingResult || moving || Boolean(dialog)}>
               <span className="financial-dice-pair"><DiceCube value={dice ?? 5} rolling={rolling} /><DiceCube value={diceTwo ?? 3} rolling={rolling} second /></span>
-              <b>{rolling ? "주사위 굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : dice && diceTwo ? `합계 ${dice + diceTwo} · 다시 굴리기` : "두 주사위 굴리기"}</b>
+              <b>{rolling ? "주사위 굴리는 중…" : showingResult ? `합계 ${rollTotal}!` : moving ? `${rollTotal}칸 이동 중…` : activePlayer.skipTurns ? "한 턴 쉬기" : rollTotal ? `합계 ${rollTotal} · 다시 굴리기` : "두 주사위 굴리기"}</b>
             </button>
+            {(showingResult || moving) && <div className={`financial-roll-status ${moving ? "moving" : "result"}`} role="status"><strong>{showingResult ? `🎲 ${dice} + ${diceTwo} = ${rollTotal}` : `📍 ${rollTotal}칸 이동 중`}</strong><small>{showingResult ? "잠시 후 말이 이동해요" : `${activePlayer.name}의 말을 따라가 보세요`}</small></div>}
             <div className="financial-effects"><span className={activePlayer.expenseMultiplier !== 1 ? "on" : ""}>다음 지출 ×{activePlayer.expenseMultiplier}</span><span className={activePlayer.startup ? "on" : ""}>창업 수익 {activePlayer.startup ? "+5" : "없음"}</span></div>
           </div>
         </div>
@@ -386,7 +398,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       </div>
       <div className="financial-mobile-control">
         <p>{activeCell.icon} 현재 <b>{activeCell.number}. {activeCell.title}</b></p>
-        <button type="button" className={rolling ? "rolling" : ""} onClick={rollDice} disabled={disabled || rolling || Boolean(dialog)}><span className="financial-dice-pair"><DiceCube value={dice ?? 5} rolling={rolling} /><DiceCube value={diceTwo ?? 3} rolling={rolling} second /></span>{rolling ? "굴리는 중…" : activePlayer.skipTurns ? "한 턴 쉬기" : "두 주사위 굴리기"}</button>
+        <button type="button" className={rolling ? "rolling" : showingResult ? "showing-result" : moving ? "moving-piece" : ""} onClick={rollDice} disabled={disabled || rolling || showingResult || moving || Boolean(dialog)}><span className="financial-dice-pair"><DiceCube value={dice ?? 5} rolling={rolling} /><DiceCube value={diceTwo ?? 3} rolling={rolling} second /></span>{rolling ? "굴리는 중…" : showingResult ? `합계 ${rollTotal}!` : moving ? `${rollTotal}칸 이동 중` : activePlayer.skipTurns ? "한 턴 쉬기" : "두 주사위 굴리기"}</button>
       </div>
 
       <aside className="financial-history"><strong>최근 금융 기록</strong>{history.map((item, index) => <p key={`${item}-${index}`}>{item}</p>)}</aside>
