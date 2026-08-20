@@ -287,7 +287,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
           window.setTimeout(() => {
             const stepPosition = (activePlayer.position + step) % cells.length;
             setPlayers((current) => current.map((player, index) => index === activePlayerIndex ? { ...player, position: stepPosition } : player));
-          }, step * 300);
+          }, step * 500);
         }
         window.setTimeout(() => {
           setMoving(false);
@@ -302,7 +302,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
           }
           setLandedCell(cells[next]);
           resolveCell(next + 1);
-        }, value * 300 + 180);
+        }, value * 500 + 180);
       }, 1250);
     }, 850);
   }
