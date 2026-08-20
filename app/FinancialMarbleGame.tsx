@@ -6,6 +6,7 @@ import type { GameOutcome } from "./GradeGame";
 type CellKind = "start" | "income" | "expense" | "quiz" | "choice" | "special";
 type BoardCell = { number: number; icon: string; title: string; detail: string; kind: CellKind };
 type Quiz = { question: string; options: string[]; answer: number; correct: number; wrong: number; explanation: string };
+type QuizQuestion = Omit<Quiz, "correct" | "wrong">;
 type Dialog =
   | { type: "message"; title: string; copy: string; amount?: number; extraRoll?: boolean }
   | { type: "quiz"; title: string; quiz: Quiz; after?: "inflation" | "popular" }
@@ -60,7 +61,7 @@ const cells: BoardCell[] = [
   { number: 19, icon: "💸", title: "STOP", detail: "금융 퀴즈", kind: "quiz" },
   { number: 20, icon: "🎲", title: "행운", detail: "주사위 한 번 더", kind: "special" },
   { number: 21, icon: "👨‍👩‍👧", title: "세뱃돈", detail: "+15만 원", kind: "income" },
-  { number: 22, icon: "🌱", title: "투자", detail: "10만 원 투자", kind: "choice" },
+  { number: 22, icon: "🌱", title: "투자", detail: "투자 퀴즈", kind: "quiz" },
   { number: 23, icon: "📢", title: "인기상품", detail: "왁뿌볼 -10만 원", kind: "quiz" },
   { number: 24, icon: "🎁", title: "깜짝 선물", detail: "+10만 원", kind: "income" },
   { number: 25, icon: "✈", title: "세계여행", detail: "원하는 칸으로 이동", kind: "special" },
@@ -73,16 +74,76 @@ const cells: BoardCell[] = [
   { number: 32, icon: "👑", title: "경제 퀴즈", detail: "왕관 퀴즈", kind: "quiz" },
 ];
 
-const quizzes: Record<number, Quiz> = {
-  2: { question: "은행에 돈을 맡기고 받는 돈을 무엇이라고 할까요?", options: ["이자", "세금", "용돈"], answer: 0, correct: 7, wrong: -5, explanation: "은행에 돈을 맡기면 약속한 비율에 따라 이자를 받을 수 있어요." },
-  11: { question: "계획적으로 돈을 쓰기 위해 가장 먼저 할 일은?", options: ["예산 세우기", "친구 따라 사기", "전부 써 버리기"], answer: 0, correct: 10, wrong: 0, explanation: "쓸 수 있는 돈과 필요한 지출을 먼저 정하면 계획 소비에 도움이 돼요." },
-  12: { question: "사려는 사람은 늘었는데 물건 수가 같다면 가격은 보통 어떻게 될까요?", options: ["올라간다", "내려간다", "항상 같다"], answer: 0, correct: 0, wrong: 0, explanation: "수요가 늘고 공급이 그대로라면 가격은 오를 가능성이 커요." },
-  19: { question: "비밀번호나 인증번호를 다른 사람에게 알려줘도 될까요?", options: ["알려줘도 된다", "절대 알려주지 않는다"], answer: 1, correct: 4, wrong: -30, explanation: "금융 비밀번호와 인증번호는 누구에게도 알려주면 안 돼요." },
-  23: { question: "왁뿌볼의 인기가 시들었습니다. 공급이 같다면 어떻게 될까요?", options: ["수요가 줄어 가격이 내려간다", "수요가 늘어 가격이 오른다", "공급이 사라진다"], answer: 0, correct: 0, wrong: 0, explanation: "인기가 줄면 수요가 감소해 가격이 내려갈 가능성이 커요." },
-  26: { question: "공장에서 같은 시간에 더 많은 물건을 만들게 되면 공급은?", options: ["늘어난다", "줄어든다"], answer: 0, correct: 10, wrong: 0, explanation: "생산량이 많아지면 시장에 공급되는 물건도 늘어나요." },
-  28: { question: "돈을 빌릴 때 꼭 확인해야 하는 것은?", options: ["이자율과 갚는 기간", "광고 색깔", "은행 건물 높이"], answer: 0, correct: 20, wrong: -10, explanation: "빌린 돈의 비용인 이자율과 상환 기간을 꼭 확인해야 해요." },
-  32: { question: "위험을 줄이기 위해 투자금을 여러 곳에 나누는 방법은?", options: ["분산 투자", "충동 구매", "전액 소비"], answer: 0, correct: 30, wrong: -15, explanation: "여러 자산에 나누어 투자하면 한 곳의 손실 위험을 줄일 수 있어요." },
+const quizQuestions: Record<number, QuizQuestion> = {
+  1: { question: "은행에 돈을 맡기는 것을 무엇이라고 할까요?", options: ["대출", "예금", "출금"], answer: 1, explanation: "은행에 돈을 맡기는 것을 예금이라고 해요." },
+  2: { question: "내 계좌에 돈을 넣는 것은 무엇일까요?", options: ["입금", "출금", "이체"], answer: 0, explanation: "계좌에 돈을 넣는 거래는 입금이에요." },
+  3: { question: "내 계좌의 돈을 친구 계좌로 보내는 것은 무엇일까요?", options: ["출금", "입금", "이체"], answer: 2, explanation: "한 계좌에서 다른 계좌로 돈을 보내는 것은 이체예요." },
+  4: { question: "계좌에서 돈을 꺼내는 것을 무엇이라고 할까요?", options: ["입금", "출금", "예금"], answer: 1, explanation: "계좌에 있는 돈을 꺼내는 거래는 출금이에요." },
+  5: { question: "은행에서 돈의 거래 내용을 기록하는 것은 무엇일까요?", options: ["통장", "주식", "영수증"], answer: 0, explanation: "통장에는 입금과 출금 같은 계좌 거래 내용이 기록돼요." },
+  6: { question: "물건이나 서비스를 사고 싶어 하는 사람을 무엇이라고 할까요?", options: ["생산자", "소비자", "은행원"], answer: 1, explanation: "물건이나 서비스를 구입해 사용하는 사람은 소비자예요." },
+  7: { question: "물건이나 서비스를 만들어 판매하는 사람이나 기업은?", options: ["생산자", "소비자", "투자자"], answer: 0, explanation: "물건이나 서비스를 만들어 파는 사람이나 기업은 생산자예요." },
+  8: { question: "소비자가 어떤 물건을 사고 싶어 하는 마음과 양을 무엇이라고 할까요?", options: ["공급", "수요", "투자"], answer: 1, explanation: "사고 싶어 하는 마음과 그 양을 수요라고 해요." },
+  9: { question: "생산자가 어떤 물건을 팔 수 있는 양을 무엇이라고 할까요?", options: ["수요", "소비", "공급"], answer: 2, explanation: "생산자가 시장에 내놓아 팔 수 있는 양을 공급이라고 해요." },
+  10: { question: "인기 있는 빵을 사고 싶은 사람이 갑자기 많아졌습니다. 가격은 어떻게 될 가능성이 높을까요?", options: ["올라간다", "내려간다", "항상 같다"], answer: 0, explanation: "공급이 같을 때 수요가 늘어나면 가격은 오를 가능성이 커요." },
+  11: { question: "농장에서 사과를 평소보다 훨씬 많이 수확했습니다. 공급은 어떻게 될까요?", options: ["증가한다", "감소한다", "변하지 않는다"], answer: 0, explanation: "생산된 사과가 많아지면 시장에 공급되는 양도 증가해요." },
+  12: { question: "물건의 공급이 많아지면 가격은 어떻게 될 가능성이 높을까요?", options: ["올라간다", "내려간다", "반드시 2배가 된다"], answer: 1, explanation: "다른 조건이 같다면 공급이 늘어날수록 가격은 내려갈 가능성이 커요." },
+  13: { question: "합리적인 소비를 할 때 생각해야 할 것과 거리가 먼 것은?", options: ["가격", "품질", "친구가 샀는지"], answer: 2, explanation: "합리적인 소비는 남을 따라 사기보다 가격, 품질, 필요성을 살펴야 해요." },
+  14: { question: "할인한다는 이유만으로 필요하지 않은 물건을 사는 것은 합리적인 소비일까요?", options: ["O", "X"], answer: 1, explanation: "싸더라도 필요하지 않은 물건을 사는 것은 합리적인 소비가 아니에요." },
+  15: { question: "물건을 사기 전에 정말 필요한지 생각하는 것은 합리적인 소비일까요?", options: ["O", "X"], answer: 0, explanation: "구매 전에 필요성을 확인하면 충동구매를 줄일 수 있어요." },
+  16: { question: "충동구매를 막는 STOP에서 S는 무엇을 의미할까요?", options: ["Stop", "Save", "Shopping"], answer: 0, explanation: "S는 일단 멈추라는 뜻의 Stop이에요." },
+  17: { question: "STOP에서 O는 무엇을 의미할까요?", options: ["Open", "Options", "Order"], answer: 1, explanation: "O는 다른 선택지를 살펴보는 Options예요." },
+  18: { question: "STOP에서 T는 무엇을 의미할까요?", options: ["Think", "Time", "Trade"], answer: 0, explanation: "T는 구매가 필요한지 다시 생각하는 Think예요." },
+  19: { question: "투자란 무엇일까요?", options: ["돈을 숨겨두는 것", "미래에 더 큰 돈을 얻기 위해 지금 돈을 사용하는 것", "돈을 모두 쓰는 것"], answer: 1, explanation: "투자는 미래의 수익을 기대하며 현재의 돈을 사용하는 일이에요." },
+  20: { question: "투자한 돈이 늘어나 원래보다 돈이 많아지는 것을 무엇이라고 할까요?", options: ["손실", "수익", "위험"], answer: 1, explanation: "투자 결과 돈이 늘어난 부분을 수익이라고 해요." },
+  21: { question: "투자한 돈이 줄어들어 원래보다 돈이 적어지는 것을 무엇이라고 할까요?", options: ["손실", "수익", "예금"], answer: 0, explanation: "투자한 돈이 줄어든 결과를 손실이라고 해요." },
+  22: { question: "투자한 돈을 잃거나 줄어들 수 있는 가능성을 무엇이라고 할까요?", options: ["위험", "수익", "공급"], answer: 0, explanation: "투자금이 줄거나 사라질 수 있는 가능성을 위험이라고 해요." },
+  23: { question: "일반적으로 위험이 클수록 기대할 수 있는 수익도 커질 수 있습니다. 맞을까요?", options: ["O", "X"], answer: 0, explanation: "보통 높은 수익을 기대하는 투자에는 더 큰 위험이 따를 수 있어요." },
+  24: { question: "주식은 회사를 여러 조각으로 나눈 '작은 주인 자격'이라고 설명할 수 있습니다. 맞을까요?", options: ["O", "X"], answer: 0, explanation: "주식을 사면 그 회사의 일부를 가진 주주가 돼요." },
+  25: { question: "사람들이 주식을 사고팔 수 있도록 도와주는 회사는 무엇일까요?", options: ["편의점", "증권회사", "마트"], answer: 1, explanation: "증권회사는 사람들이 주식을 거래할 수 있도록 도와줘요." },
+  26: { question: "주식의 가격인 주가는 무엇에 따라 오르내릴 수 있을까요?", options: ["사람들의 사고파는 양", "날씨만", "학교 성적"], answer: 0, explanation: "주가는 주식을 사려는 사람과 팔려는 사람의 양 등에 따라 변해요." },
+  27: { question: "한 곳이 아니라 여러 곳에 나누어 투자하는 것을 무엇이라고 할까요?", options: ["집중투자", "분산투자", "충동투자"], answer: 1, explanation: "여러 곳에 나누어 투자하는 방법을 분산투자라고 해요." },
+  28: { question: "'계란을 한 바구니에 담지 마라'와 관련된 투자 방법은?", options: ["분산투자", "몰아서 투자하기", "아무 곳에나 투자하기"], answer: 0, explanation: "투자 대상을 나누면 한 곳에서 생긴 손실의 영향을 줄일 수 있어요." },
+  29: { question: "꼭 필요한 생활비나 빌린 돈으로 위험한 투자를 하는 것은 좋은 방법일까요?", options: ["O", "X"], answer: 1, explanation: "생활비와 빌린 돈은 위험한 투자에 사용하지 않는 것이 안전해요." },
+  30: { question: "다음 중 배운 투자 방법으로 가장 적절한 것은?", options: ["한 곳에 모든 돈 투자하기", "빌린 돈으로 투자하기", "여러 곳에 나누어 투자하기"], answer: 2, explanation: "여러 곳에 나누어 투자하면 위험을 분산할 수 있어요." },
 };
+
+const quizPools: Record<number, number[]> = {
+  2: [1, 2, 3, 4, 5],
+  11: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+  12: [8, 10],
+  19: [13, 14, 15, 16, 17, 18],
+  22: [19, 20, 21, 22, 23, 29],
+  23: [8, 10],
+  26: [9, 11, 12],
+  28: [24, 25, 26, 27, 28, 29, 30],
+  32: Array.from({ length: 30 }, (_, index) => index + 1),
+};
+
+const quizRewards: Record<number, Pick<Quiz, "correct" | "wrong">> = {
+  2: { correct: 7, wrong: -5 },
+  11: { correct: 10, wrong: 0 },
+  12: { correct: 0, wrong: 0 },
+  19: { correct: 4, wrong: -30 },
+  22: { correct: 20, wrong: 0 },
+  23: { correct: 0, wrong: 0 },
+  26: { correct: 10, wrong: 0 },
+  28: { correct: 20, wrong: -10 },
+  32: { correct: 30, wrong: -15 },
+};
+
+function randomQuiz(cellNumber: number): Quiz {
+  const pool = quizPools[cellNumber];
+  const questionNumber = pool[Math.floor(Math.random() * pool.length)];
+  return { ...quizQuestions[questionNumber], ...quizRewards[cellNumber] };
+}
+
+function randomInt(max: number) {
+  return Math.floor(Math.random() * max);
+}
+
+function randomChance(probability: number) {
+  return Math.random() < probability;
+}
 
 const expenseByCell: Record<number, number> = { 3: 18, 8: 4, 9: 1, 17: 10, 18: 8, 27: 20, 29: 6, 30: 20 };
 const incomeByCell: Record<number, number> = { 4: 50, 7: 5, 14: 10, 16: 1, 21: 15, 24: 10 };
@@ -214,9 +275,10 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       openMessage(cell.title, `${actual.toLocaleString()}만 원을 지출했어요.`, -actual);
       return;
     }
-    if (quizzes[cellNumber]) {
+    if (cellNumber !== 12 && quizPools[cellNumber]) {
+      if (cellNumber === 22) spend(10, "투자금");
       if (cellNumber === 23) spend(10, "왁뿌볼 구매");
-      setDialog({ type: "quiz", title: cell.title, quiz: quizzes[cellNumber], after: cellNumber === 23 ? "popular" : undefined });
+      setDialog({ type: "quiz", title: cell.title, quiz: randomQuiz(cellNumber), after: cellNumber === 23 ? "popular" : undefined });
       return;
     }
     switch (cellNumber) {
@@ -231,16 +293,9 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       case 13: updateActivePlayer((player) => ({ ...player, expenseMultiplier: 0.7 })); openMessage("물가 하락", "공급이 늘어 다음 지출 1회가 30% 할인돼요."); break;
       case 15: updateActivePlayer((player) => ({ ...player, skipTurns: 1 })); openMessage("무인도", "다음 차례에는 주사위를 굴리지 못해요."); break;
       case 20: openMessage("행운!", "주사위를 바로 한 번 더 굴리세요.", undefined, true); break;
-      case 22: {
-        spend(10, "투자금");
-        const success = Math.random() < 0.5;
-        if (success) changeCash(20, "투자 성공");
-        openMessage(success ? "투자 성공!" : "투자 아쉬움", success ? "투자금 10만 원을 내고 수익 20만 원을 받았어요." : "이번 투자는 수익을 내지 못했어요.", success ? 10 : -10);
-        break;
-      }
       case 25: setDialog({ type: "travel" }); break;
       case 31: {
-        const amount = Math.random() < 0.01 ? 100 : Math.floor(Math.random() * 10) + 1;
+        const amount = randomChance(0.01) ? 100 : randomInt(10) + 1;
         changeCash(amount, "행운상자");
         openMessage(amount === 100 ? "1% 대박!" : "행운상자", `${amount}만 원을 발견했어요!`, amount);
         break;
@@ -258,8 +313,8 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
       return;
     }
     setRolling(true);
-    const firstValue = Math.floor(Math.random() * 6) + 1;
-    const secondValue = Math.floor(Math.random() * 6) + 1;
+    const firstValue = randomInt(6) + 1;
+    const secondValue = randomInt(6) + 1;
     const value = firstValue + secondValue;
     const isDouble = firstValue === secondValue;
     let animationStep = 0;
@@ -328,7 +383,7 @@ export default function FinancialMarbleGame({ onFinish, disabled }: { onFinish: 
   }
 
   function chooseInflation(quiz: boolean) {
-    if (quiz) setDialog({ type: "quiz", title: "수요 증가 방어 퀴즈", quiz: quizzes[12], after: "inflation" });
+    if (quiz) setDialog({ type: "quiz", title: "수요 증가 방어 퀴즈", quiz: randomQuiz(12), after: "inflation" });
     else { updateActivePlayer((player) => ({ ...player, expenseMultiplier: 2 })); setDialog({ type: "message", title: "물가 상승 적용", copy: "다음 지출 1회가 두 배가 돼요." }); }
   }
 

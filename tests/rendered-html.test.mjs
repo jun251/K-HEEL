@@ -266,6 +266,16 @@ test("grade 5-6 game is a responsive multiplayer financial marble board", async 
   assert.match(financialMarble, /step \* 500/);
   assert.match(financialMarble, /updatedPlayers\.every\(\(player\) => player\.turnsUsed >= MAX_TURNS\)/);
   assert.match(financialMarble, /모든 플레이어가 \$\{MAX_TURNS\}턴을 마쳤어요/);
+  assert.match(financialMarble, /1: \{ question: "은행에 돈을 맡기는 것을 무엇이라고 할까요\?"/);
+  assert.match(financialMarble, /30: \{ question: "다음 중 배운 투자 방법으로 가장 적절한 것은\?"/);
+  assert.match(financialMarble, /2: \[1, 2, 3, 4, 5\]/);
+  assert.match(financialMarble, /19: \[13, 14, 15, 16, 17, 18\]/);
+  assert.match(financialMarble, /22: \[19, 20, 21, 22, 23, 29\]/);
+  assert.match(financialMarble, /28: \[24, 25, 26, 27, 28, 29, 30\]/);
+  assert.match(financialMarble, /function randomQuiz/);
+  assert.match(financialMarble, /Math\.random\(\) \* pool\.length/);
+  assert.match(financialMarble, /cellNumber === 22\) spend\(10, "투자금"\)/);
+  assert.match(financialMarble, /randomQuiz\(12\)/);
   assert.match(financialMarble, /1250/);
   assert.match(financialMarble, /잠시 후 말이 이동해요/);
   assert.doesNotMatch(financialMarble, /<em>\{cell\.detail\}<\/em>/);
