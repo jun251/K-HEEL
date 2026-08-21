@@ -132,10 +132,11 @@ test("grade 3-4 game is the rational consumer challenge with five menus", async 
 });
 
 test("education materials open as responsive PPT-based web lessons", async () => {
-  const [library, lessonData, lessonViewer, grade34Activities, grade56Activities] = await Promise.all([
+  const [library, lessonData, lessonViewer, grade12Activities, grade34Activities, grade56Activities] = await Promise.all([
     readFile(new URL("../app/materials/MaterialsLibrary.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/lesson-data.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/ResponsiveLesson.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/materials/lesson/Grade12Activities.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/Grade34Activities.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/materials/lesson/Grade56Activities.tsx", import.meta.url), "utf8"),
   ]);
@@ -154,11 +155,15 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(lessonViewer, /sourceSlide === 4/);
   assert.match(lessonViewer, /토끼가 가장 먼저 필요한 것을 골라보세요/);
   assert.match(lessonViewer, /정답: 물! 목마름을 해결해 주기 때문이에요/);
-  assert.match(lessonViewer, /17: \{ answer: "X"/);
-  assert.match(lessonViewer, /18: \{ answer: "O"/);
-  assert.match(lessonViewer, /19: \{ answer: "O"/);
-  assert.match(lessonViewer, /20: \{ answer: "X"/);
-  assert.match(lessonViewer, /땡! 다시 골라보세요/);
+  assert.match(grade12Activities, /17: \{[\s\S]*?answer: "X"/);
+  assert.match(grade12Activities, /18: \{[\s\S]*?answer: "O"/);
+  assert.match(grade12Activities, /19: \{[\s\S]*?answer: "O"/);
+  assert.match(grade12Activities, /20: \{[\s\S]*?answer: "X"/);
+  assert.match(grade12Activities, /grade12-quiz-slide/);
+  assert.match(grade12Activities, /땡! 다시 선택해 보세요/);
+  assert.match(lessonViewer, /Grade12OxQuizSlide/);
+  assert.match(lessonViewer, /grade12-quiz-thumbnail/);
+  assert.doesNotMatch(lessonViewer, /lesson-answer-mask ox/);
   assert.match(lessonViewer, /kheel-lesson-sync/);
   assert.match(lessonViewer, /선생님·학생 화면과 연결됨/);
   assert.match(lessonViewer, /선생님 발표 화면/);
@@ -176,11 +181,16 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(grade34Activities, /choices: \["예금", "적금"\]/);
   assert.match(grade34Activities, /choices: \["3일", "5일"\]/);
   assert.match(grade34Activities, /땡! 다시 선택해 보세요/);
+  assert.match(grade34Activities, /Grade34GoldenBellSlide/);
+  assert.match(grade34Activities, /grade34-golden-slide/);
+  assert.match(grade34Activities, /정답은 선택한 뒤에만 확인할 수 있어요/);
+  assert.match(grade34Activities, /골든벨 성공!/);
   assert.match(lessonViewer, /Grade34UnitPriceSlide/);
+  assert.match(lessonViewer, /Grade34GoldenBellSlide/);
   assert.match(grade34Activities, /100mL당/);
   assert.match(grade34Activities, /먼저 예상해 보세요/);
   assert.doesNotMatch(lessonViewer, /grade34-unit-answer/);
-  assert.match(lessonViewer, /grade34-golden-answer/);
+  assert.doesNotMatch(lessonViewer, /grade34-golden-answer/);
   assert.match(grade56Activities, /입금/);
   assert.match(grade56Activities, /출금/);
   assert.match(grade56Activities, /송금/);
@@ -195,6 +205,38 @@ test("education materials open as responsive PPT-based web lessons", async () =>
   assert.match(lessonViewer, /Grade56InvestmentChoice/);
   const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(styles, /lesson-answer-mask\.rabbit \{ bottom:3%; height:25%/);
+});
+
+test("grade 1-2 offers the traffic-light game and the 40-item island memory game", async () => {
+  const [trafficGame, islandGame, gameMenu, gradeGame, home, gameWindow, styles] = await Promise.all([
+    readFile(new URL("../app/TrafficLightGame.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/IslandGame.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/Grade12GameMenu.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/GradeGame.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/game/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(trafficGame, /green: \{ label: "꼭 필요한 소비"[\s\S]*?colorName: "초록"/);
+  assert.match(trafficGame, /yellow: \{ label: "한 번 더 생각할 소비"[\s\S]*?colorName: "노랑"/);
+  assert.match(trafficGame, /red: \{ label: "필요하지 않은 충동 소비"[\s\S]*?colorName: "빨강"/);
+  assert.match(trafficGame, /배가 안 고픈데 친구가 먹길래 나도 간식을 샀어요/);
+  assert.match(trafficGame, /이가 아파서 치과에 가서 치료를 받았어요/);
+  assert.match(trafficGame, /card-\$\{String\(cardIndex \+ 1\)\.padStart\(2, "0"\)\}\.jpeg/);
+  assert.match(trafficGame, /firstTryCorrect \* 5/);
+  assert.match(trafficGame, /이 신호는 상황과 조금 달라요/);
+  assert.match(trafficGame, /trafficCards\.length - 1/);
+  assert.match(islandGame, /const FLASH_TIME_MS = 200/);
+  assert.match(islandGame, /물건 40개 기억 완료/);
+  assert.match(islandGame, /item-\$\{String\(index \+ 1\)\.padStart\(2, "0"\)\}\.jpg/);
+  assert.match(gameMenu, /신호등 소비 게임/);
+  assert.match(gameMenu, /무인도 게임/);
+  assert.match(gradeGame, /Grade12GameMenu/);
+  assert.match(home, /title: "신호등 소비 게임 · 무인도 게임"/);
+  assert.match(gameWindow, /title: "신호등 소비 게임 · 무인도 게임"/);
+  assert.match(styles, /traffic-signal-choices/);
+  assert.match(styles, /island-flash-card/);
 });
 
 test("teacher-led lessons synchronize student pages and report quiz participation", async () => {

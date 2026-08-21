@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import FinancialMarbleGame from "./FinancialMarbleGame";
+import Grade12GameMenu from "./Grade12GameMenu";
 
 export type GradeBand = "1-2" | "3-4" | "5-6";
 export type GameOutcome = { score: number; remainingBudget: number };
@@ -244,7 +245,7 @@ export default function GradeGame({
   if (band === "5-6") {
     return <FinancialMarbleGame onFinish={onFinish} disabled={disabled} />;
   }
-  return <SimpleGradeGame band={band} onFinish={onFinish} disabled={disabled} />;
+  return <Grade12GameMenu onFinish={onFinish} disabled={disabled} />;
 }
 
 function RationalConsumerGame({
@@ -427,62 +428,5 @@ function RationalConsumerGame({
         </article>
       )}
     </section>
-  );
-}
-
-function SimpleGradeGame({
-  band,
-  onFinish,
-  disabled,
-}: {
-  band: "1-2";
-  onFinish: (outcome: GameOutcome) => void;
-  disabled: boolean;
-}) {
-  const [choices, setChoices] = useState<number[]>([]);
-  const [done, setDone] = useState(false);
-  const options = [
-    { name: "아플 때 먹는 약", value: 20 },
-    { name: "새로 나온 장난감", value: 0 },
-    { name: "학교 갈 버스비", value: 20 },
-    { name: "유행하는 스티커", value: 0 },
-    { name: "점심 식사", value: 20 },
-  ];
-  const score = choices.reduce((sum, index) => sum + options[index].value, 40);
-  const toggle = (index: number) => {
-    setChoices((current) =>
-      current.includes(index)
-        ? current.filter((item) => item !== index)
-        : [...current, index],
-    );
-  };
-
-  if (done) {
-    return (
-      <div className="game-complete">
-        <span>🎉</span>
-        <h3>미션 완료!</h3>
-        <strong>{Math.round(score)}점</strong>
-        <p>{score >= 90 ? "경제 선택 달인! 계획과 필요를 모두 잘 생각했어요." : "좋은 시작이에요! 다음에는 예산과 미래도 함께 생각해 봐요."}</p>
-        <button className="primary-button" disabled={disabled} onClick={() => onFinish({ score: Math.round(score), remainingBudget: 0 })}>결과판에 기록하기</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mission">
-      <div className="mission-question">
-        <b>꼭 필요한 것만 골라 보세요</b>
-      </div>
-      <div className="choice-grid">
-        {options.map((option, index) => (
-          <button key={option.name} className={choices.includes(index) ? "selected" : ""} onClick={() => toggle(index)}>
-            <span>{choices.includes(index) ? "✓" : "+"}</span>
-            <strong>{option.name}</strong>
-          </button>
-        ))}
-      </div>
-      <button className="primary-button finish" disabled={!choices.length} onClick={() => setDone(true)}>선택 완료하기 →</button>
-    </div>
   );
 }

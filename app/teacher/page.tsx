@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getLessonSourceSlide, lessons, type LessonGrade } from "../materials/lesson/lesson-data";
-import { Grade34UnitPriceSlide } from "../materials/lesson/Grade34Activities";
+import Grade12OxQuizSlide, { grade12OxQuizzes } from "../materials/lesson/Grade12Activities";
+import { Grade34GoldenBellSlide, Grade34UnitPriceSlide } from "../materials/lesson/Grade34Activities";
 import { Grade56InvestmentChoice } from "../materials/lesson/Grade56Activities";
 
 type ClassroomState = "waiting" | "active" | "paused" | "ended";
@@ -274,7 +275,11 @@ export default function TeacherDashboard() {
                   <strong>{lessonControl.gradeBand.replace("-", "·")}학년 · {lessonControl.page}쪽</strong>
                 </div>
                 <div className="teacher-lesson-preview-stage">
-                  {lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 9 ? (
+                  {lessonControl.gradeBand === "1-2" && grade12OxQuizzes[lessonControl.sourceSlide] ? (
+                    <Grade12OxQuizSlide sourceSlide={lessonControl.sourceSlide} selectedAnswer={null} feedback={null} disabled onAnswer={() => undefined} />
+                  ) : lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 26 ? (
+                    <Grade34GoldenBellSlide key={lessonControl.sourceSlide} readOnly />
+                  ) : lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 9 ? (
                     <Grade34UnitPriceSlide revealed={false} />
                   ) : lessonControl.gradeBand === "5-6" && [23, 24].includes(lessonControl.sourceSlide) ? (
                     <Grade56InvestmentChoice key={lessonControl.sourceSlide} readOnly />
@@ -285,10 +290,6 @@ export default function TeacherDashboard() {
                     />
                   )}
                   {lessonControl.gradeBand === "1-2" && lessonControl.sourceSlide === 4 && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
-                  {lessonControl.gradeBand === "1-2" && [17, 18, 19, 20].includes(lessonControl.sourceSlide) && <span className="lesson-answer-mask ox" aria-hidden="true" />}
-                  {lessonControl.gradeBand === "3-4" && lessonControl.sourceSlide === 26 && (
-                    <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
-                  )}
                 </div>
               </div>
             )}

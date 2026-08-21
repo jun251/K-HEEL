@@ -8,7 +8,7 @@ type Player = { token: string; nickname: string; roomCode: string; gradeBand: Gr
 type Result = { rank: number; nickname: string; gradeBand: GradeBand; score: number; remainingBudget?: number };
 
 const gradeInfo: Record<GradeBand, { label: string; title: string; copy: string; color: string }> = {
-  "1-2": { label: "1·2학년", title: "꼭 필요할까?", copy: "필요한 것과 갖고 싶은 것을 구별해요.", color: "lime" },
+  "1-2": { label: "1·2학년", title: "신호등 소비 게임 · 무인도 게임", copy: "소비를 구별하고, 짧게 나타난 물건을 빠르게 기억해요.", color: "lime" },
   "3-4": { label: "3·4학년", title: "합리적 소비왕 챌린지", copy: "15,000원 안에서 가격·품질·건강·환경을 함께 살펴요.", color: "yellow" },
   "5-6": { label: "5·6학년", title: "금융마블", copy: "32칸을 이동하며 수입·지출·저축·투자를 체험해요.", color: "blue" },
 };
@@ -282,7 +282,7 @@ export default function Home() {
 
       <section className="section" id="grades">
         <div className="section-heading"><div><p className="eyebrow">학년별 맞춤 미션</p><h2>내 학년에 딱 맞는 경제 게임</h2></div><p>쉬운 선택부터 미래 계획까지,<br/>한 단계씩 경제 근육을 키워요.</p></div>
-        <div className="grade-grid">{(Object.keys(gradeInfo) as GradeBand[]).map((band, index) => <article className={`grade-card ${gradeInfo[band].color}`} key={band}><div className="grade-number">0{index + 1}</div><span className="grade-tag">{gradeInfo[band].label}</span><div className="game-icon" aria-hidden="true">{band === "1-2" ? "🛒" : band === "3-4" ? "🧺" : "🎲"}</div><h3>{gradeInfo[band].title}</h3><p>{gradeInfo[band].copy}</p><button onClick={() => { document.querySelector<HTMLInputElement>('.join-card input')?.focus(); }}>학생 코드 입력하기 <span>→</span></button></article>)}</div>
+        <div className="grade-grid">{(Object.keys(gradeInfo) as GradeBand[]).map((band, index) => <article className={`grade-card ${gradeInfo[band].color}`} key={band}><div className="grade-number">0{index + 1}</div><span className="grade-tag">{gradeInfo[band].label}</span><div className="game-icon" aria-hidden="true">{band === "1-2" ? "🚦" : band === "3-4" ? "🧺" : "🎲"}</div><h3>{gradeInfo[band].title}</h3><p>{gradeInfo[band].copy}</p><button onClick={() => { document.querySelector<HTMLInputElement>('.join-card input')?.focus(); }}>학생 코드 입력하기 <span>→</span></button></article>)}</div>
       </section>
 
       {player && <section className="game-section" id="game"><div className="game-shell"><div className="game-heading"><span>{gradeInfo[player.gradeBand].label} 미션</span><h2>{player.nickname}님, 준비됐나요?</h2><p>정답보다 더 중요한 건 왜 그렇게 선택했는지 생각하는 거예요.</p></div><GradeGame band={player.gradeBand} onFinish={finishGame} disabled={loading} /></div></section>}

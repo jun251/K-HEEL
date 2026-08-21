@@ -2,17 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LessonInfo } from "./lesson-data";
-import Grade34Activities, { Grade34UnitPriceSlide } from "./Grade34Activities";
+import Grade12OxQuizSlide, { grade12OxQuizzes, type Grade12Answer } from "./Grade12Activities";
+import Grade34Activities, { Grade34GoldenBellSlide, Grade34UnitPriceSlide } from "./Grade34Activities";
 import Grade56Activities, { Grade56InvestmentChoice } from "./Grade56Activities";
 
-type Choice = "water" | "balloon" | "crown" | "O" | "X";
-
-const oxQuizzes: Record<number, { answer: "O" | "X"; feedback: string }> = {
-  17: { answer: "X", feedback: "정답 X · 그것은 원하는 것에 가까워요." },
-  18: { answer: "O", feedback: "정답 O · 물은 목마름을 해결해 주는 필요한 것이에요." },
-  19: { answer: "O", feedback: "정답 O · 원하는 마음도 소중해요." },
-  20: { answer: "X", feedback: "정답 X · 필요 없는 물건인지 먼저 생각해요." },
-};
+type Choice = "water" | "balloon" | "crown" | Grade12Answer;
 
 type ResponsiveLessonProps = {
   lesson: LessonInfo;
@@ -25,6 +19,7 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   const [presentationMode, setPresentationMode] = useState(false);
   const [presentationStatus, setPresentationStatus] = useState("");
   const [unitPriceRevealed, setUnitPriceRevealed] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<Grade12Answer | null>(null);
   const stageRef = useRef<HTMLElement>(null);
 
   const syncPresentation = useCallback((page: number) => {
@@ -40,6 +35,7 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
     (next: number) => {
       setSlide(Math.min(lesson.slideCount, Math.max(1, next)));
       setFeedback(null);
+      setSelectedAnswer(null);
       const bounded = Math.min(lesson.slideCount, Math.max(1, next));
       if (presentationMode) syncPresentation(bounded);
     },
@@ -95,12 +91,14 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
   const imagePath = `/lesson-slides/grade-${lesson.grade}/slide-${sourceSlide}.png`;
   const progress = (slide / lesson.slideCount) * 100;
   const isRabbitQuestion = lesson.grade === "1-2" && sourceSlide === 4;
-  const oxQuiz = lesson.grade === "1-2" ? oxQuizzes[sourceSlide] : undefined;
-  const isGrade34Activity = lesson.grade === "3-4" && [3, 8, 9, 26].includes(sourceSlide);
+  const oxQuiz = lesson.grade === "1-2" ? grade12OxQuizzes[sourceSlide] : undefined;
+  const isGrade34Activity = lesson.grade === "3-4" && [3, 8, 9].includes(sourceSlide);
   const isGrade56Activity = lesson.grade === "5-6" && [9, 10, 16, 19].includes(sourceSlide);
 
   useEffect(() => {
     setUnitPriceRevealed(false);
+    setFeedback(null);
+    setSelectedAnswer(null);
   }, [sourceSlide]);
 
   function choose(choice: Choice) {
@@ -114,10 +112,11 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
     }
 
     if (oxQuiz) {
+      setSelectedAnswer(choice as Grade12Answer);
       setFeedback(
         choice === oxQuiz.answer
-          ? { correct: true, message: oxQuiz.feedback }
-          : { correct: false, message: "땡! 다시 골라보세요." },
+          ? { correct: true, message: oxQuiz.correctMessage }
+          : { correct: false, message: "선택한 답은 정답이 아니에요. 다시 생각해 보세요." },
       );
     }
   }
@@ -163,7 +162,18 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
 
       <section className="lesson-stage-wrap" aria-label="교육자료 슬라이드">
         <section className="lesson-stage" ref={stageRef}>
-          {lesson.grade === "3-4" && sourceSlide === 9 ? (
+          {oxQuiz ? (
+            <Grade12OxQuizSlide
+              key={sourceSlide}
+              sourceSlide={sourceSlide}
+              selectedAnswer={selectedAnswer}
+              feedback={feedback}
+              disabled={Boolean(feedback?.correct)}
+              onAnswer={choose}
+            />
+          ) : lesson.grade === "3-4" && sourceSlide === 26 ? (
+            <Grade34GoldenBellSlide key={sourceSlide} />
+          ) : lesson.grade === "3-4" && sourceSlide === 9 ? (
             <Grade34UnitPriceSlide revealed={unitPriceRevealed} />
           ) : lesson.grade === "5-6" && [23, 24].includes(sourceSlide) ? (
             <Grade56InvestmentChoice key={sourceSlide} onCorrect={() => goTo(25)} />
@@ -175,31 +185,18 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
             />
           )}
           {isRabbitQuestion && <span className="lesson-answer-mask rabbit" aria-hidden="true" />}
-          {oxQuiz && <span className="lesson-answer-mask ox" aria-hidden="true" />}
-          {lesson.grade === "3-4" && sourceSlide === 26 && (
-            <>{[1, 2, 3, 4].map((number) => <span key={number} className={`lesson-answer-mask grade34-golden-answer answer-${number}`} aria-hidden="true" />)}</>
-          )}
           <button className="lesson-fullscreen" type="button" onClick={() => void toggleFullscreen()}>
             크게 보기
           </button>
         </section>
 
-        {(isRabbitQuestion || oxQuiz) && (
+        {isRabbitQuestion && (
           <section className="lesson-activity" aria-label="문제 선택">
-            <p>{isRabbitQuestion ? "토끼가 가장 먼저 필요한 것을 골라보세요." : "O 또는 X를 골라보세요."}</p>
-            <div className={isRabbitQuestion ? "lesson-rabbit-choices" : "lesson-ox-choices"}>
-              {isRabbitQuestion ? (
-                <>
-                  <button type="button" onClick={() => choose("water")}><span aria-hidden="true">💧</span> 물</button>
-                  <button type="button" onClick={() => choose("balloon")}><span aria-hidden="true">🎈</span> 풍선</button>
-                  <button type="button" onClick={() => choose("crown")}><span aria-hidden="true">👑</span> 왕관</button>
-                </>
-              ) : (
-                <>
-                  <button type="button" onClick={() => choose("O")} aria-label="O 선택">O</button>
-                  <button type="button" onClick={() => choose("X")} aria-label="X 선택">X</button>
-                </>
-              )}
+            <p>토끼가 가장 먼저 필요한 것을 골라보세요.</p>
+            <div className="lesson-rabbit-choices">
+              <button type="button" onClick={() => choose("water")}><span aria-hidden="true">💧</span> 물</button>
+              <button type="button" onClick={() => choose("balloon")}><span aria-hidden="true">🎈</span> 풍선</button>
+              <button type="button" onClick={() => choose("crown")}><span aria-hidden="true">👑</span> 왕관</button>
             </div>
             {feedback && (
               <p className={`lesson-feedback ${feedback.correct ? "correct" : "wrong"}`} role="status">
@@ -255,11 +252,15 @@ export default function ResponsiveLesson({ lesson }: ResponsiveLessonProps) {
                   }}
                   aria-current={page === slide ? "page" : undefined}
                 >
-                  <img
-                    src={`/lesson-slides/grade-${lesson.grade}/slide-${lesson.slideSources?.[page - 1] ?? page}.png`}
-                    alt=""
-                    loading="lazy"
-                  />
+                  {lesson.grade === "1-2" && grade12OxQuizzes[lesson.slideSources?.[page - 1] ?? page] ? (
+                    <span className="grade12-quiz-thumbnail" aria-hidden="true"><b>O</b><b>X</b><em>OX 퀴즈</em></span>
+                  ) : (
+                    <img
+                      src={`/lesson-slides/grade-${lesson.grade}/slide-${lesson.slideSources?.[page - 1] ?? page}.png`}
+                      alt=""
+                      loading="lazy"
+                    />
+                  )}
                   <span>{page}</span>
                 </button>
               ))}

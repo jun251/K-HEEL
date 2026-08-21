@@ -22,7 +22,7 @@ function isBlockingClassroomState(state: ClassroomState): state is BlockingClass
 }
 
 const gradeInfo: Record<GradeBand, { label: string; title: string }> = {
-  "1-2": { label: "1·2학년", title: "꼭 필요할까?" },
+  "1-2": { label: "1·2학년", title: "신호등 소비 게임 · 무인도 게임" },
   "3-4": { label: "3·4학년", title: "합리적 소비왕 챌린지" },
   "5-6": { label: "5·6학년", title: "금융마블" },
 };
